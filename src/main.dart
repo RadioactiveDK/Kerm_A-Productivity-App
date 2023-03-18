@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 void main() {
   runApp(const MyApp());
 }
-
 class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);
 
@@ -13,43 +12,57 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Kerm',
       theme: ThemeData(
+        textTheme: Theme.of(context).textTheme.apply(
+          bodyColor: Colors.white,
+        ),
+        scaffoldBackgroundColor: Colors.black,
+        iconTheme: const IconThemeData(color: Colors.black,),
         appBarTheme: const AppBarTheme(
-          color: Colors.black87,
-          iconTheme: IconThemeData(
-            color: Colors.white,
-          )
+          color: Colors.white,
+          titleTextStyle: TextStyle(color: Colors.black),
+          iconTheme: IconThemeData(color: Colors.black,),
         )
       ),
-      home: const MyHomePage(),
+      home: const DefaultTabController(
+        length: 2,
+        child: MyHomePage(),
+      ),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
+class MyHomePage extends StatelessWidget {
   const MyHomePage({Key? key}) : super(key: key);
 
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
-class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Kerm'),
+        title: const Text('Kerm',style: TextStyle(color: Colors.black,fontWeight: FontWeight.bold,fontSize: 25),),
         actions: <Widget> [
           IconButton(
-              onPressed: (){
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const MySettings()),
-                );
-              },
-              icon: const Icon(Icons.settings),
+            onPressed: (){
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const MySettings()),
+              );
+            },
+            icon: const Icon(Icons.settings),
           )
         ],
+        bottom: const TabBar(
+          tabs: [
+            Tab(child: Text('Daily Quest',style: TextStyle(color: Colors.black),),),
+            Tab(child: Text('Goals',style: TextStyle(color: Colors.black),),),
+          ],
+        ),
       ),
-      body: const MyHomeBody(),
+      body: const TabBarView(
+        children: [
+          MyDailyQuest(),
+          MyGoals(),
+        ],
+      )
     );
   }
 }
@@ -65,7 +78,7 @@ class _MySettingsState extends State<MySettings> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Settings'),
+        title: const Text('Settings',style: TextStyle(color: Colors.black),),
         leading: BackButton(
           onPressed: (){
             Navigator.pop(context);
@@ -79,13 +92,12 @@ class _MySettingsState extends State<MySettings> {
   }
 }
 
-class MyHomeBody extends StatefulWidget {
-  const MyHomeBody({Key? key}) : super(key: key);
-
+class MyDailyQuest extends StatefulWidget {
+  const MyDailyQuest({Key? key}) : super(key: key);
   @override
-  State<MyHomeBody> createState() => _MyHomeBodyState();
+  State<MyDailyQuest> createState() => _MyDailyQuestState();
 }
-class _MyHomeBodyState extends State<MyHomeBody> {
+class _MyDailyQuestState extends State<MyDailyQuest> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -99,10 +111,24 @@ class _MyHomeBodyState extends State<MyHomeBody> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: (){},
-        backgroundColor: Colors.black38,
-        child: const Icon(Icons.add,color: Colors.white,),
+        backgroundColor: Colors.black54,
+        child: const Icon(Icons.add,color: Colors.white,size: 50,),
       ),
     );
   }
 }
 
+class MyGoals extends StatefulWidget {
+  const MyGoals({Key? key}) : super(key: key);
+
+  @override
+  State<MyGoals> createState() => _MyGoalsState();
+}
+class _MyGoalsState extends State<MyGoals> {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Container(child: Text('hiiiiii'),),
+    );
+  }
+}
