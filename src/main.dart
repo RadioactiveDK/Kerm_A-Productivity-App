@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
-void main() {
+void main() async{
   runApp(const MyApp());
 }
 class MyApp extends StatelessWidget {
@@ -126,7 +126,7 @@ class _MyDailyQuestState extends State<MyDailyQuest> {
   }
   createQuestWidgets(){
     var questWidgets = <Widget>[];
-    questList.forEach((element) {
+    for (var element in questList) {
       questWidgets.add(
           MyQuestWidget(
             questList: questList,
@@ -134,11 +134,11 @@ class _MyDailyQuestState extends State<MyDailyQuest> {
             updateState: updateState(),
           )
       );
-    });
+    }
     return questWidgets;
   }
 
-  final myController = new TextEditingController();
+  final myController = TextEditingController();
   @override
   void dispose() {
     myController.dispose();
@@ -297,19 +297,28 @@ class MyGoals extends StatefulWidget {
   State<MyGoals> createState() => _MyGoalsState();
 }
 class _MyGoalsState extends State<MyGoals> {
-  KermDatabase kdb = KermDatabase();
-  Map< String , List<String>? > goalsMap = {'1':['1']};
+  Map< String , List<String>? > goalsMap = {};
+
+  Future<Map<String, List<String>?>> getState()async{
+    KermDatabase kdb = KermDatabase();
+    if(await databaseFactory.databaseExists('kermDB.db')){
+      return await kdb.getGoalData();
+    } else {
+      return {};
+    }
+  }
 
   void updateGoals()async{
+    KermDatabase kdb = KermDatabase();
     setState(() {});
     await kdb.updateGoalData(goalsMap);
   }
-
   updateState(){
-    return ()=>setState((){});
+    return ()=>updateGoals();
   }
-
   createGoalWidgets(){
+    goalsMap = getState() as Map<String, List<String>?>;
+
     var goalWidgets = <Widget>[];
     goalsMap.forEach((key, value) {
       goalWidgets.add(
@@ -324,7 +333,7 @@ class _MyGoalsState extends State<MyGoals> {
     return goalWidgets;
   }
 
-  final myController = new TextEditingController();
+  final myController = TextEditingController();
   @override
   void dispose() {
     myController.dispose();
@@ -406,7 +415,8 @@ class MyGoalWidget extends StatefulWidget {
 class _MyGoalWidgetState extends State<MyGoalWidget> {
   createMilestoneWidgets(){
     var milestoneWidgets=<Widget>[];
-    widget.milestones!.forEach((element) => milestoneWidgets.add(
+    for (var element in widget.milestones!) {
+      milestoneWidgets.add(
         Container(
           width: double.infinity,
           child: MyTaskWidget(
@@ -416,12 +426,12 @@ class _MyGoalWidgetState extends State<MyGoalWidget> {
             goalName: widget.goalName,
           )
         )
-      )
-    );
+      );
+    }
     return Column(children: milestoneWidgets);
   }
 
-  final myController = new TextEditingController();
+  final myController = TextEditingController();
   @override
   void dispose() {
     myController.dispose();
@@ -505,7 +515,7 @@ class _MyGoalWidgetState extends State<MyGoalWidget> {
                           if(myController.text!='') {
                             widget.goalsMap![widget.goalName]!.add(myController.text);
                             myController.text='';
-                            setState((){});
+                            widget.updateState();
                             Navigator.pop(context);
                           }
                         },
@@ -600,7 +610,7 @@ class KermDatabase {
       join(await getDatabasesPath(), 'kermDB.db'),
       onCreate: (db, version) {
         return db.execute(
-          'CREATE TABLE goals(id INTEGER PRIMARY KEY, ltg TEXT,stg TEXT)',
+          'CREATE TABLE KermData(id INTEGER PRIMARY KEY, ltg TEXT,stg TEXT)',
         );
       },
       version: 1,
@@ -615,28 +625,49 @@ class KermDatabase {
     myGoalsMap.forEach((key, value) {
       ltg.add(key);
       if(value!.isEmpty) {
-        stg.add('\t');
+        stg.add('Egg');
       } else {
-        stg.add(value.join('\t'));
+        stg.add(value.join('-'));
       }
     });
 
     myMap['ltg']=ltg.join('\n');
     myMap['stg']=stg.join('\n');
 
-    await db.update('goals', myMap,where: 'id = ?',whereArgs: [0]);
+    // print(myMap);
+
+    await db.update(
+        'KermData',
+        myMap,
+        where: 'id = ?',
+        whereArgs: [0],
+    );
   }
+
   Future< Map< String,List<String>? > > getGoalData() async {
     final db = await openDB();
     Map<String,List<String>?> goalMap={};
 
-    final List<Map<String, dynamic>> dataList = await db.query('goals');
+    final List<Map<String, dynamic>> dataList = await db.query('KermData');
     Map<String, dynamic> dataMap = dataList[0];
 
+    List<String>? ltg;
+    List<String>? stg;
+
     dataMap.forEach((key, value) {
-      List<String> ltg = key.split('\n');
-      List<String> stg = value.split('\n');
+      ltg = key.split('\n');
+      stg = value.toString().split('\n');
     });
+
+    for (int i =0; i < ltg!.length ; i++) {
+      if(stg![i]!='Egg'){
+        goalMap[ltg![i]] = stg![i].split('-');
+      } else {
+        goalMap[ltg![i]] = [];
+      }
+    }
+
+    // print(goalMap);
 
     return goalMap;
   }
