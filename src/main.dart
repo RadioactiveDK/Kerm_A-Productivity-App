@@ -117,28 +117,196 @@ class MyDailyQuest extends StatefulWidget {
   State<MyDailyQuest> createState() => _MyDailyQuestState();
 }
 class _MyDailyQuestState extends State<MyDailyQuest> {
+  bool inProgress = true;
+
+  dailyQuestScreen(){
+    if(inProgress){
+      return DailyQuestScreen();
+    } else {
+      return HistoryScreen();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return dailyQuestScreen();
+  }
+}
+
+class DailyQuestScreen extends StatefulWidget {
+  const DailyQuestScreen({Key? key}) : super(key: key);
+
+  @override
+  State<DailyQuestScreen> createState() => _DailyQuestScreenState();
+}
+class _DailyQuestScreenState extends State<DailyQuestScreen> {
+  List<String> questList = ['1'];
+
+  updateState(){
+    return ()=>setState((){});
+  }
+
+  createQuestWidgets(){
+    var questWidgets = <Widget>[];
+    questList.forEach((element) {
+      questWidgets.add(
+          MyQuestWidget(
+            questList: questList,
+            questName: element,
+            updateState: updateState(),
+          )
+      );
+    });
+    return questWidgets;
+  }
+
+  final myController = new TextEditingController();
+  @override
+  void dispose() {
+    myController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        padding: const EdgeInsets.all(7),
-        child: Column(
-          children: const [Text('data')],
-        ),
-      ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {},
-        backgroundColor: Colors.black54,
-        child: const Icon(
-          Icons.add,
-          color: Colors.white,
-          size: 50,
+          child: const Icon(Icons.add,color: Colors.white,),
+          onPressed: (){
+            showDialog(
+              context: context,
+              builder: (context) {
+                return AlertDialog(
+                  title: const Text(
+                    'Add a Quest',
+                    style: TextStyle(color: Colors.black),
+                  ),
+                  content: TextField(
+                    controller: myController,
+                    style: const TextStyle(
+                        color: Colors.black,
+                        fontWeight: FontWeight.w400
+                    ),
+                  ),
+                  actions: [
+                    IconButton(
+                        onPressed: (){
+                          myController.text='';
+                          Navigator.pop(context);
+                        },
+                        icon: const Icon(Icons.close_sharp)
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.done_outline_sharp),
+                      onPressed: (){
+                        if(myController.text!='') {
+                          questList.add(myController.text);
+                          setState((){});
+                          myController.text='';
+                          Navigator.pop(context);
+                        }
+                      },
+                    ),
+                  ],
+                );
+              },
+            );
+          }
+      ),
+      body: Container(
+        padding: const EdgeInsets.all(5),
+        child: SingleChildScrollView(
+          child: Column(
+            children: createQuestWidgets(),
+          ),
         ),
       ),
     );
   }
 }
 
+class MyQuestWidget extends StatefulWidget {
+  String? questName;
+  List<String>? questList;
+  VoidCallback updateState;
+
+  MyQuestWidget({Key? key, this.questName,this.questList,required this.updateState}) : super(key: key);
+
+  @override
+  State<MyQuestWidget> createState() => _MyQuestWidgetState();
+}
+class _MyQuestWidgetState extends State<MyQuestWidget> {
+  @override
+  Widget build(BuildContext context) {
+    return ElevatedButton(
+      onPressed: (){},
+      onLongPress:(){
+        showDialog(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              title: const Text('Options',style: TextStyle(color: Colors.black),),
+              actions: [
+                TextButton(
+                    onPressed: (){},
+                    onLongPress:(){
+                      widget.questList!.remove(widget.questName);
+                      widget.updateState();
+                      Navigator.pop(context);
+                    },
+                    child: const Text('Delete milestone')
+                ),
+                IconButton(
+                    onPressed: (){Navigator.pop(context);},
+                    icon: const Icon(Icons.close_sharp)
+                ),
+                TextButton(
+                    child: const Text('Mark as done',),
+                    onPressed: (){},
+                    onLongPress:(){
+                      setState((){});
+                      Navigator.pop(context);
+                    }
+                ),
+              ],
+            );
+          },
+        );
+      },
+      style: ElevatedButton.styleFrom(
+        primary: Colors.tealAccent,
+        shadowColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20.0)
+        ),
+      ),
+      child: Container(
+        alignment: Alignment.centerLeft,
+        child: Text(
+          widget.questName!,
+          textAlign: TextAlign.start,
+          style: const TextStyle(color: Colors.black),
+        ),
+      ),
+    );
+  }
+}
+
+
+class HistoryScreen extends StatefulWidget {
+  const HistoryScreen({Key? key}) : super(key: key);
+
+  @override
+  State<HistoryScreen> createState() => _HistoryScreenState();
+}
+class _HistoryScreenState extends State<HistoryScreen> {
+  @override
+  Widget build(BuildContext context) {
+    return Container();
+  }
+}
+
+// Goals tab
 class MyGoals extends StatefulWidget {
   const MyGoals({Key? key}) : super(key: key);
 
@@ -173,7 +341,7 @@ class _MyGoalsState extends State<MyGoals> {
     return goalWidgets;
   }
 
-  final myController = TextEditingController();
+  final myController = new TextEditingController();
   @override
   void dispose() {
     myController.dispose();
@@ -423,6 +591,7 @@ class _MyTaskWidgetState extends State<MyTaskWidget> {
   }
 }
 
+// Database
 class KermDatabase {
   Future<Database> openDB()async{
     return openDatabase(
