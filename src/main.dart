@@ -146,20 +146,17 @@ class MyGoals extends StatefulWidget {
   State<MyGoals> createState() => _MyGoalsState();
 }
 class _MyGoalsState extends State<MyGoals> {
-  Map< String , List<String>? > goalsMap = {
-    'Getting Started':[
-      'Add your Long-term goals using the \'+\' button',
-      'Add Short-term goals by tapping on Long-term goals'
-    ]
-  };
+  KermDatabase kdb = KermDatabase();
+  Map< String , List<String>? > goalsMap = {'dd':['we','weeeeeee']};
 
-  void updateGoals() {
+  void updateGoals()async{
     setState(() {});
+    await kdb.updateGoalData(goalsMap);
   }
   createGoalWidgets(){
     var goalWidgets = <Widget>[];
     goalsMap.forEach((key, value) {
-      goalWidgets.add(MyTaskCard(taskName: key,));
+      goalWidgets.add(MyGoalWidget(goalName: key,milestones: value,goalsMap: goalsMap,));
     });
     return goalWidgets;
   }
@@ -202,9 +199,9 @@ class _MyGoalsState extends State<MyGoals> {
                     onPressed: (){
                       if(myController.text!='' && goalsMap[myController.text]==null) {
                         goalsMap[myController.text]=[];
+                        updateGoals();
+                        Navigator.pop(context);
                       }
-                      updateGoals();
-                      Navigator.pop(context);
                     },
                   ),
                 ],
@@ -224,10 +221,36 @@ class _MyGoalsState extends State<MyGoals> {
     );
   }
 }
-class MyTaskCard extends StatelessWidget {
-  final String? taskName, desc;
 
-  MyTaskCard({this.taskName, this.desc});
+class MyGoalWidget extends StatefulWidget {
+  String? goalName;
+  List<String>? milestones;
+  Map< String , List<String>? >? goalsMap;
+
+  MyGoalWidget({Key? key,this.goalName, this.milestones,this.goalsMap}) : super(key: key);
+
+  @override
+  State<MyGoalWidget> createState() => _MyGoalWidgetState();
+}
+class _MyGoalWidgetState extends State<MyGoalWidget> {
+  createMilestoneWidgets(){
+    var milestoneWidgets=<Widget>[];
+    widget.milestones!.forEach((element) => milestoneWidgets.add(
+        Container(
+          width: double.infinity,
+          child: MyTaskWidget(myTask: element,)
+        )
+      )
+    );
+    return Column(children: milestoneWidgets);
+  }
+
+  final myController = new TextEditingController();
+  @override
+  void dispose() {
+    myController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -240,18 +263,54 @@ class MyTaskCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(10),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Text(
-            taskName ?? 'Untitled Task',
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+          TextButton(
+            onPressed: (){},
+            onLongPress: (){
+              showDialog(
+                context: context,
+                builder: (context) {
+                  return AlertDialog(
+                    title: const Text(
+                      'Add a Measurable Time-bound Milestone',
+                      style: TextStyle(color: Colors.black),
+                    ),
+                    content: TextField(
+                      controller: myController,
+                      style: const TextStyle(
+                          color: Colors.black,
+                          fontWeight: FontWeight.w400
+                      ),
+                    ),
+                    actions: [
+                      IconButton(
+                          onPressed: (){Navigator.pop(context);},
+                          icon: const Icon(Icons.delete)
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.done_outline_sharp),
+                        onPressed: (){
+                          if(myController.text!='') {
+                            widget.goalsMap![widget.goalName]!.add(myController.text);
+                            setState((){});
+                            Navigator.pop(context);
+                          }
+                        },
+                      ),
+                    ],
+                  );
+                },
+              );
+            },
+            child: Text(
+                widget.goalName!,
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+              ),
           ),
           Padding(
-            padding: const EdgeInsets.only(bottom: 30),
-            child: Text(
-              desc ?? 'Description',
-              style: const TextStyle(fontWeight: FontWeight.w300),
-            ),
+            padding: const EdgeInsets.only(bottom: 1),
+            child: createMilestoneWidgets()
           )
         ],
       ),
@@ -259,89 +318,84 @@ class MyTaskCard extends StatelessWidget {
   }
 }
 
+class MyTaskWidget extends StatefulWidget {
+  String? myTask;
+  MyTaskWidget({Key? key, required this.myTask}) : super(key: key);
+
+  @override
+  State<MyTaskWidget> createState() => _MyTaskWidgetState();
+}
+class _MyTaskWidgetState extends State<MyTaskWidget> {
+  bool isDone = false;
+
+  myDeco(){
+    if(isDone){
+      return ElevatedButton.styleFrom(primary: Colors.grey);
+    } else {
+      return ElevatedButton.styleFrom(primary: Colors.deepPurpleAccent);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ElevatedButton(
+      onPressed: (){isDone = !isDone;setState((){});},
+      style: myDeco(),
+      child: Container(
+        alignment: Alignment.centerLeft,
+        child: Text(
+          widget.myTask!,
+          textAlign: TextAlign.start,
+        ),
+      ),
+    );
+  }
+}
+
 class KermDatabase {
-  Future<Database> myDB()async{
+  Future<Database> openDB()async{
     return openDatabase(
       join(await getDatabasesPath(), 'kermDB.db'),
       onCreate: (db, version) {
         return db.execute(
-          'CREATE TABLE goals(id INTEGER PRIMARY KEY, ltg TEXT, stg LIST<INTEGER>)',
+          'CREATE TABLE goals(id INTEGER PRIMARY KEY, ltg TEXT,stg TEXT)',
         );
       },
+      version: 1,
     );
   }
 
-  Future<void> updateGoals(Map<String,List<String>> myGoalsMap)async{
-    Database mydb = await myDB();
-    await mydb.update('goals', myGoalsMap);
+  Future<void> updateGoalData(Map<String,List<String>?> myGoalsMap)async{
+    Database db = await openDB();
+    Map<String,dynamic> myMap={'id':0};
+    List<String?> ltg=[],stg=[];
+
+    myGoalsMap.forEach((key, value) {
+      ltg.add(key);
+      if(value!.isEmpty) {
+        stg.add('\t');
+      } else {
+        stg.add(value.join('\t'));
+      }
+    });
+
+    myMap['ltg']=ltg.join('\n');
+    myMap['stg']=stg.join('\n');
+
+    await db.update('goals', myMap,where: 'id = ?',whereArgs: [0]);
   }
-}
+  Future< Map< String,List<String>? > > getGoalData() async {
+    final db = await openDB();
+    Map<String,List<String>?> goalMap={};
 
+    final List<Map<String, dynamic>> dataList = await db.query('goals');
+    Map<String, dynamic> dataMap = dataList[0];
 
-///////////////waste
-class MyTaskEditor extends StatefulWidget {
-  const MyTaskEditor({Key? key}) : super(key: key);
+    dataMap.forEach((key, value) {
+      List<String> ltg = key.split('\n');
+      List<String> stg = value.split('\n');
+    });
 
-  @override
-  State<MyTaskEditor> createState() => _MyTaskEditorState();
-}
-class _MyTaskEditorState extends State<MyTaskEditor> {
-  KermDatabase mydb = KermDatabase();
-
-
-
-
-
-
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        actions: [
-          IconButton(
-            onPressed: (){
-
-            },
-            icon: const Icon(Icons.done_outline_sharp),
-          ),
-        ],
-        title: const TextField(
-          decoration: InputDecoration(
-              hintText: 'Long term goal',
-              hintStyle: TextStyle(
-                  fontWeight: FontWeight.w400, color: Colors.black38
-              ),
-              enabledBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(color: Colors.black),
-              )
-          ),
-          style: TextStyle(
-            color: Colors.black,
-            fontWeight: FontWeight.bold,
-            fontSize: 20,
-          ),
-        ),
-      ),
-      body: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(10),
-        child: const TextField(
-          decoration: InputDecoration(
-              hintText: 'Short term goals',
-              hintStyle: TextStyle(
-                  fontWeight: FontWeight.w400, color: Colors.white30
-              ),
-              enabledBorder: UnderlineInputBorder(
-                borderSide: BorderSide(color: Colors.white),
-              )
-          ),
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 18,
-          ),
-        ),
-      ),
-    );
+    return goalMap;
   }
 }
