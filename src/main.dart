@@ -118,36 +118,12 @@ class MyDailyQuest extends StatefulWidget {
   State<MyDailyQuest> createState() => _MyDailyQuestState();
 }
 class _MyDailyQuestState extends State<MyDailyQuest> {
-  bool inProgress = true;
-
-  dailyQuestScreen(){
-    if(inProgress){
-      return DailyQuestScreen();
-    } else {
-      return HistoryScreen();
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return dailyQuestScreen();
-  }
-}
-
-class DailyQuestScreen extends StatefulWidget {
-  const DailyQuestScreen({Key? key}) : super(key: key);
-
-  @override
-  State<DailyQuestScreen> createState() => _DailyQuestScreenState();
-}
-class _DailyQuestScreenState extends State<DailyQuestScreen> {
   bool isLocked = false;
   List<String> questList = ['1'];
 
   updateState(){
     return ()=>setState((){});
   }
-
   createQuestWidgets(){
     var questWidgets = <Widget>[];
     questList.forEach((element) {
@@ -169,6 +145,7 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
     super.dispose();
   }
 
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -180,7 +157,7 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
               builder: (context) {
                 return AlertDialog(
                   title: const Text(
-                    'Daily Quest',
+                    'Add a Quest',
                     style: TextStyle(color: Colors.black),
                   ),
                   content: TextField(
@@ -191,22 +168,22 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
                     ),
                   ),
                   actions: [
-                    if(!isLocked)TextButton(
-                      onPressed: (){},
-                      onLongPress: (){
-                        isLocked = true;
-                        Navigator.pop(context);
-                      },
-                      child: const Text('Lock Quests'),
-                    ),
-                    if(isLocked)TextButton(
-                        onPressed: (){},
-                        onLongPress: (){
-                          isLocked=false;
-                          Navigator.pop(context);
-                        },
-                        child: const Text('End Quest')
-                    ),
+                    // if(!isLocked)TextButton(
+                    //   onPressed: (){},
+                    //   onLongPress: (){
+                    //     isLocked = true;
+                    //     Navigator.pop(context);
+                    //   },
+                    //   child: const Text('Start Quests'),
+                    // ),
+                    // if(isLocked)TextButton(
+                    //     onPressed: (){},
+                    //     onLongPress: (){
+                    //       isLocked=false;
+                    //       Navigator.pop(context);
+                    //     },
+                    //     child: const Text('End Quests')
+                    // ),
                     IconButton(
                         onPressed: (){
                           myController.text='';
@@ -272,7 +249,7 @@ class _MyQuestWidgetState extends State<MyQuestWidget> {
                       widget.updateState();
                       Navigator.pop(context);
                     },
-                    child: const Text('Delete milestone')
+                    child: const Text('Delete Quest')
                 ),
                 IconButton(
                     onPressed: (){Navigator.pop(context);},
@@ -311,18 +288,6 @@ class _MyQuestWidgetState extends State<MyQuestWidget> {
 }
 
 
-class HistoryScreen extends StatefulWidget {
-  const HistoryScreen({Key? key}) : super(key: key);
-
-  @override
-  State<HistoryScreen> createState() => _HistoryScreenState();
-}
-class _HistoryScreenState extends State<HistoryScreen> {
-  @override
-  Widget build(BuildContext context) {
-    return Container();
-  }
-}
 
 // Goals tab
 class MyGoals extends StatefulWidget {
@@ -506,7 +471,7 @@ class _MyGoalWidgetState extends State<MyGoalWidget> {
                           onLongPress:(){
                             Navigator.pop(context);
                           },
-                          child: const Text('Mark as Done')
+                          child: const Text('Mark as done')
                       )
                     ],
                   );
@@ -595,7 +560,7 @@ class _MyTaskWidgetState extends State<MyTaskWidget> {
                       widget.updateState();
                       Navigator.pop(context);
                     },
-                    child: const Text('Delete milestone')
+                    child: const Text('Delete Milestone')
                 ),
                 IconButton(
                     onPressed: (){Navigator.pop(context);},
@@ -625,6 +590,8 @@ class _MyTaskWidgetState extends State<MyTaskWidget> {
     );
   }
 }
+
+
 
 // Database
 class KermDatabase {
