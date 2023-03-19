@@ -258,7 +258,12 @@ class _MyGoalWidgetState extends State<MyGoalWidget> {
     widget.milestones!.forEach((element) => milestoneWidgets.add(
         Container(
           width: double.infinity,
-          child: MyTaskWidget(myTask: element,)
+          child: MyTaskWidget(
+            myTask: element,
+            goalsMap: widget.goalsMap,
+            updateState: widget.updateState,
+            goalName: widget.goalName,
+          )
         )
       )
     );
@@ -272,6 +277,14 @@ class _MyGoalWidgetState extends State<MyGoalWidget> {
     super.dispose();
   }
 
+  goalColor(){
+    if(widget.goalsMap![widget.goalName!]!.isEmpty){
+      return Colors.white30;
+    } else {
+      return Colors.cyanAccent;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -279,7 +292,7 @@ class _MyGoalWidgetState extends State<MyGoalWidget> {
       padding: const EdgeInsets.all(10),
       margin: const EdgeInsets.symmetric(vertical: 2),
       decoration: BoxDecoration(
-        color: Colors.white30,
+        color: goalColor(),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Column(
@@ -351,27 +364,54 @@ class _MyGoalWidgetState extends State<MyGoalWidget> {
 
 class MyTaskWidget extends StatefulWidget {
   String? myTask;
-  MyTaskWidget({Key? key, required this.myTask}) : super(key: key);
+  Map< String , List<String>? >? goalsMap;
+  String? goalName;
+  VoidCallback updateState;
+  MyTaskWidget({Key? key,this.myTask,this.goalsMap,this.goalName,required this.updateState}) : super(key: key);
 
   @override
   State<MyTaskWidget> createState() => _MyTaskWidgetState();
 }
 class _MyTaskWidgetState extends State<MyTaskWidget> {
-  bool isDone = false;
-
-  myDeco(){
-    if(isDone){
-      return ElevatedButton.styleFrom(primary: Colors.grey);
-    } else {
-      return ElevatedButton.styleFrom(primary: Colors.deepPurpleAccent);
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
     return ElevatedButton(
-      onPressed: (){isDone = !isDone;setState((){});},
-      style: myDeco(),
+      onPressed: (){},
+      onLongPress:(){
+        showDialog(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              title: const Text('Options',style: TextStyle(color: Colors.black),),
+              actions: [
+                TextButton(
+                    onPressed: (){},
+                    onLongPress:(){
+                      widget.goalsMap![widget.goalName!]!.remove(widget.myTask);
+                      widget.updateState();
+                      Navigator.pop(context);
+                    },
+                    child: const Text('Delete milestone')
+                ),
+                IconButton(
+                    onPressed: (){Navigator.pop(context);},
+                    icon: const Icon(Icons.close_sharp)
+                ),
+                TextButton(
+                  child: const Text('Mark as done',),
+                  onPressed: (){},
+                  onLongPress:(){
+                      setState((){});
+                      Navigator.pop(context);
+                  }
+                ),
+              ],
+            );
+          },
+        );
+      },
+      style: ElevatedButton.styleFrom(primary: Colors.deepPurpleAccent),
       child: Container(
         alignment: Alignment.centerLeft,
         child: Text(
