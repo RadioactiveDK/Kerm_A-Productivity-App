@@ -63,7 +63,7 @@ class MyHomePage extends StatelessWidget {
             tabs: [
               Tab(
                 child: Text(
-                  'Daily Quest',
+                  'Daily Quests',
                   style: TextStyle(color: Colors.black),
                 ),
               ),
@@ -463,14 +463,6 @@ class _MyGoalWidgetState extends State<MyGoalWidget> {
     super.dispose();
   }
 
-  goalColor(){
-    if(widget.goalsMap![widget.goalName!]!.isEmpty){
-      return Colors.white30;
-    } else {
-      return Colors.cyanAccent;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -478,15 +470,50 @@ class _MyGoalWidgetState extends State<MyGoalWidget> {
       padding: const EdgeInsets.all(10),
       margin: const EdgeInsets.symmetric(vertical: 2),
       decoration: BoxDecoration(
-        color: goalColor(),
+        color: Colors.cyanAccent,
         borderRadius: BorderRadius.circular(10),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           TextButton(
-            onPressed: (){},
             onLongPress: (){
+              showDialog(
+                context: context,
+                builder: (context) {
+                  return AlertDialog(
+                    title: const Text(
+                      'Options',
+                      style: TextStyle(color: Colors.black),
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed:(){},
+                        onLongPress: (){
+                          widget.goalsMap!.remove(widget.goalName);
+                          myController.text='';
+                          widget.updateState();
+                          Navigator.pop(context);
+                        },
+                        child: const Text('Delete Goal'),
+                      ),
+                      IconButton(
+                          onPressed: (){myController.text='';Navigator.pop(context);},
+                          icon: const Icon(Icons.close_sharp)
+                      ),
+                      TextButton(
+                          onPressed: (){},
+                          onLongPress:(){
+                            Navigator.pop(context);
+                          },
+                          child: const Text('Mark as Done')
+                      )
+                    ],
+                  );
+                },
+              );
+            },
+            onPressed: (){
               showDialog(
                 context: context,
                 builder: (context) {
@@ -503,16 +530,6 @@ class _MyGoalWidgetState extends State<MyGoalWidget> {
                       ),
                     ),
                     actions: [
-                      TextButton(
-                          onPressed:(){},
-                          onLongPress: (){
-                            widget.goalsMap!.remove(widget.goalName);
-                            myController.text='';
-                            widget.updateState();
-                            Navigator.pop(context);
-                          },
-                          child: const Text('Delete Goal'),
-                      ),
                       IconButton(
                           onPressed: (){myController.text='';Navigator.pop(context);},
                           icon: const Icon(Icons.close_sharp)
