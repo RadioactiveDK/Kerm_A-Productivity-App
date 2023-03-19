@@ -110,6 +110,7 @@ class _MySettingsState extends State<MySettings> {
   }
 }
 
+// Daily Quest Tab
 class MyDailyQuest extends StatefulWidget {
   const MyDailyQuest({Key? key}) : super(key: key);
 
@@ -140,6 +141,7 @@ class DailyQuestScreen extends StatefulWidget {
   State<DailyQuestScreen> createState() => _DailyQuestScreenState();
 }
 class _DailyQuestScreenState extends State<DailyQuestScreen> {
+  bool isLocked = false;
   List<String> questList = ['1'];
 
   updateState(){
@@ -178,7 +180,7 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
               builder: (context) {
                 return AlertDialog(
                   title: const Text(
-                    'Add a Quest',
+                    'Daily Quest',
                     style: TextStyle(color: Colors.black),
                   ),
                   content: TextField(
@@ -189,6 +191,22 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
                     ),
                   ),
                   actions: [
+                    if(!isLocked)TextButton(
+                      onPressed: (){},
+                      onLongPress: (){
+                        isLocked = true;
+                        Navigator.pop(context);
+                      },
+                      child: const Text('Lock Quests'),
+                    ),
+                    if(isLocked)TextButton(
+                        onPressed: (){},
+                        onLongPress: (){
+                          isLocked=false;
+                          Navigator.pop(context);
+                        },
+                        child: const Text('End Quest')
+                    ),
                     IconButton(
                         onPressed: (){
                           myController.text='';
@@ -196,7 +214,7 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
                         },
                         icon: const Icon(Icons.close_sharp)
                     ),
-                    IconButton(
+                    if(!isLocked)IconButton(
                       icon: const Icon(Icons.done_outline_sharp),
                       onPressed: (){
                         if(myController.text!='') {
