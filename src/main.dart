@@ -147,16 +147,28 @@ class MyGoals extends StatefulWidget {
 }
 class _MyGoalsState extends State<MyGoals> {
   KermDatabase kdb = KermDatabase();
-  Map< String , List<String>? > goalsMap = {'dd':['we','weeeeeee']};
+  Map< String , List<String>? > goalsMap = {'1':['1']};
 
   void updateGoals()async{
     setState(() {});
     await kdb.updateGoalData(goalsMap);
   }
+
+  updateState(){
+    return ()=>setState((){});
+  }
+
   createGoalWidgets(){
     var goalWidgets = <Widget>[];
     goalsMap.forEach((key, value) {
-      goalWidgets.add(MyGoalWidget(goalName: key,milestones: value,goalsMap: goalsMap,));
+      goalWidgets.add(
+          MyGoalWidget(
+            goalName: key,
+            milestones: value,
+            goalsMap: goalsMap,
+            updateState: updateState(),
+          )
+      );
     });
     return goalWidgets;
   }
@@ -191,14 +203,15 @@ class _MyGoalsState extends State<MyGoals> {
                 ),
                 actions: [
                   IconButton(
-                      onPressed: (){Navigator.pop(context);},
-                      icon: const Icon(Icons.delete)
+                      onPressed: (){myController.text='';Navigator.pop(context);},
+                      icon: const Icon(Icons.close_sharp)
                   ),
                   IconButton(
                     icon: const Icon(Icons.done_outline_sharp),
                     onPressed: (){
                       if(myController.text!='' && goalsMap[myController.text]==null) {
                         goalsMap[myController.text]=[];
+                        myController.text='';
                         updateGoals();
                         Navigator.pop(context);
                       }
@@ -226,8 +239,15 @@ class MyGoalWidget extends StatefulWidget {
   String? goalName;
   List<String>? milestones;
   Map< String , List<String>? >? goalsMap;
+  VoidCallback updateState;
 
-  MyGoalWidget({Key? key,this.goalName, this.milestones,this.goalsMap}) : super(key: key);
+  MyGoalWidget({
+    Key? key,
+    this.goalName,
+    this.milestones,
+    this.goalsMap,
+    required this.updateState
+  }) : super(key: key);
 
   @override
   State<MyGoalWidget> createState() => _MyGoalWidgetState();
@@ -284,15 +304,26 @@ class _MyGoalWidgetState extends State<MyGoalWidget> {
                       ),
                     ),
                     actions: [
+                      TextButton(
+                          onPressed:(){},
+                          onLongPress: (){
+                            widget.goalsMap!.remove(widget.goalName);
+                            myController.text='';
+                            widget.updateState();
+                            Navigator.pop(context);
+                          },
+                          child: const Text('Delete Goal'),
+                      ),
                       IconButton(
-                          onPressed: (){Navigator.pop(context);},
-                          icon: const Icon(Icons.delete)
+                          onPressed: (){myController.text='';Navigator.pop(context);},
+                          icon: const Icon(Icons.close_sharp)
                       ),
                       IconButton(
                         icon: const Icon(Icons.done_outline_sharp),
                         onPressed: (){
                           if(myController.text!='') {
                             widget.goalsMap![widget.goalName]!.add(myController.text);
+                            myController.text='';
                             setState((){});
                             Navigator.pop(context);
                           }
