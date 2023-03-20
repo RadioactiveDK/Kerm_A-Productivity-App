@@ -2,21 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
-KermDatabase kdb = KermDatabase();
 Map< String , List<String>? > goalsMap = {};
-
-
+List<String> questList = [];
 
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
 
-  if( await databaseFactory.databaseExists('KermDB.db') ) {
-    print('\n\n\n\n\n\n\n\n\n\n\n\n\n\n');
-    goalsMap = await kdb.getGoalData();
-  }else {
+  KermDatabase kdb = KermDatabase();
+  if( !(await databaseFactory.databaseExists('KermDB.db')) ) {
+    print('initializeeeeeeeeeee');
     await kdb.initialiseDB();
-    goalsMap = await kdb.getGoalData();
   }
+
+  goalsMap = await kdb.getGoalData();
+  questList = await kdb.getQuestData();
 
   runApp(const MyApp());
 }
@@ -134,10 +133,14 @@ class MyDailyQuest extends StatefulWidget {
 }
 class _MyDailyQuestState extends State<MyDailyQuest> {
   bool isLocked = false;
-  List<String> questList = ['1'];
 
+  void updateQuests()async{
+    KermDatabase kdb = KermDatabase();
+    await kdb.updateQuestData(questList);
+    setState(() {});
+  }
   updateState(){
-    return ()=>setState((){});
+    return ()=>updateQuests();
   }
   createQuestWidgets(){
     var questWidgets = <Widget>[];
@@ -159,7 +162,6 @@ class _MyDailyQuestState extends State<MyDailyQuest> {
     myController.dispose();
     super.dispose();
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -206,13 +208,13 @@ class _MyDailyQuestState extends State<MyDailyQuest> {
                         },
                         icon: const Icon(Icons.close_sharp)
                     ),
-                    if(!isLocked)IconButton(
+                    IconButton(
                       icon: const Icon(Icons.done_outline_sharp),
                       onPressed: (){
                         if(myController.text!='') {
                           questList.add(myController.text);
-                          setState((){});
                           myController.text='';
+                          updateQuests();
                           Navigator.pop(context);
                         }
                       },
@@ -315,7 +317,7 @@ class _MyGoalsState extends State<MyGoals> {
   // Map< String , List<String>? > goalsMap = {};
 
   void updateGoals()async{
-    // KermDatabase kdb = KermDatabase();
+    KermDatabase kdb = KermDatabase();
     await kdb.updateGoalData(goalsMap);
     setState(() {});
   }
@@ -623,8 +625,8 @@ class KermDatabase {
 
   Future<void> initialiseDB()async{
     Database _db = await openDB();
-    print('inaiiiiitiiiiiiiiiiiiiiiiii');
     await _db.insert('KermData', {'id': 0, 'ltg': '1', 'stg': '2'}, conflictAlgorithm: ConflictAlgorithm.replace);
+    await _db.insert('KermData', {'id': 1, 'ltg': '1', 'stg': '2'}, conflictAlgorithm: ConflictAlgorithm.replace);
   }
   
   Future<void> updateGoalData(Map<String,List<String>?> myGoalsMap)async{
@@ -653,7 +655,6 @@ class KermDatabase {
         whereArgs: [0],
     );
   }
-
   Future< Map< String,List<String>? > > getGoalData() async {
     final db = await openDB();
     Map<String,List<String>?> goalMap={};
@@ -683,8 +684,45 @@ class KermDatabase {
     }
 
     print(goalMap);
-    print('goal data leliya');
 
     return goalMap;
+  }
+
+  Future<void> updateQuestData(List<String> questList)async{
+    Database db = await openDB();
+    Map<String,dynamic> myMap = {'id':1,'stg':''};
+
+    print(questList);
+
+    List<String> ltg = [];
+
+    for (var element in questList) {
+      ltg.add(element);
+    }
+
+    myMap['ltg']=ltg.join('\n');
+
+    print(myMap);
+
+    await db.update(
+      'KermData',
+      myMap,
+      where: 'id = ?',
+      whereArgs: [1],
+    );
+  }
+  Future< List<String> > getQuestData() async {
+    final db = await openDB();
+
+    final List<Map<String, dynamic>> dataList = await db.query('KermData');
+    Map<String, dynamic> dataMap = dataList[1];
+
+    print(dataList);
+    print(dataMap);
+
+    List<String> ltg = dataMap['ltg'].split('\n');
+
+    print(ltg);
+    return ltg;
   }
 }
