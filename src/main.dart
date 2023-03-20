@@ -2,7 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
+KermDatabase kdb = KermDatabase();
+Map< String , List<String>? > goalsMap = {};
+
+
+
 void main() async{
+  WidgetsFlutterBinding.ensureInitialized();
+
+  if( await databaseFactory.databaseExists('KermDB.db') ) {
+    print('\n\n\n\n\n\n\n\n\n\n\n\n\n\n');
+    goalsMap = await kdb.getGoalData();
+  }else {
+    await kdb.initialiseDB();
+    goalsMap = await kdb.getGoalData();
+  }
+
   runApp(const MyApp());
 }
 class MyApp extends StatelessWidget {
@@ -297,28 +312,17 @@ class MyGoals extends StatefulWidget {
   State<MyGoals> createState() => _MyGoalsState();
 }
 class _MyGoalsState extends State<MyGoals> {
-  Map< String , List<String>? > goalsMap = {};
-
-  Future<Map<String, List<String>?>> getState()async{
-    KermDatabase kdb = KermDatabase();
-    if(await databaseFactory.databaseExists('kermDB.db')){
-      return await kdb.getGoalData();
-    } else {
-      return {};
-    }
-  }
+  // Map< String , List<String>? > goalsMap = {};
 
   void updateGoals()async{
-    KermDatabase kdb = KermDatabase();
-    setState(() {});
+    // KermDatabase kdb = KermDatabase();
     await kdb.updateGoalData(goalsMap);
+    setState(() {});
   }
   updateState(){
     return ()=>updateGoals();
   }
   createGoalWidgets(){
-    goalsMap = getState() as Map<String, List<String>?>;
-
     var goalWidgets = <Widget>[];
     goalsMap.forEach((key, value) {
       goalWidgets.add(
@@ -607,16 +611,22 @@ class _MyTaskWidgetState extends State<MyTaskWidget> {
 class KermDatabase {
   Future<Database> openDB()async{
     return openDatabase(
-      join(await getDatabasesPath(), 'kermDB.db'),
+      join(await getDatabasesPath(), 'KermDB.db'),
       onCreate: (db, version) {
         return db.execute(
-          'CREATE TABLE KermData(id INTEGER PRIMARY KEY, ltg TEXT,stg TEXT)',
+          'CREATE TABLE KermData(id INTEGER PRIMARY KEY, ltg TEXT, stg TEXT)',
         );
       },
       version: 1,
     );
   }
 
+  Future<void> initialiseDB()async{
+    Database _db = await openDB();
+    print('inaiiiiitiiiiiiiiiiiiiiiiii');
+    await _db.insert('KermData', {'id': 0, 'ltg': '1', 'stg': '2'}, conflictAlgorithm: ConflictAlgorithm.replace);
+  }
+  
   Future<void> updateGoalData(Map<String,List<String>?> myGoalsMap)async{
     Database db = await openDB();
     Map<String,dynamic> myMap={'id':0};
@@ -634,7 +644,7 @@ class KermDatabase {
     myMap['ltg']=ltg.join('\n');
     myMap['stg']=stg.join('\n');
 
-    // print(myMap);
+    print(myMap);
 
     await db.update(
         'KermData',
@@ -649,25 +659,31 @@ class KermDatabase {
     Map<String,List<String>?> goalMap={};
 
     final List<Map<String, dynamic>> dataList = await db.query('KermData');
+    print(dataList);
+
     Map<String, dynamic> dataMap = dataList[0];
+  print(dataMap);
 
     List<String>? ltg;
     List<String>? stg;
 
-    dataMap.forEach((key, value) {
-      ltg = key.split('\n');
-      stg = value.toString().split('\n');
-    });
+    ltg = dataMap['ltg'].split('\n');
+    stg = dataMap['stg'].split('\n');
+
+
+    print(ltg);
+    print(stg);
 
     for (int i =0; i < ltg!.length ; i++) {
       if(stg![i]!='Egg'){
-        goalMap[ltg![i]] = stg![i].split('-');
+        goalMap[ltg[i]] = stg[i].split('-');
       } else {
-        goalMap[ltg![i]] = [];
+        goalMap[ltg[i]] = [];
       }
     }
 
-    // print(goalMap);
+    print(goalMap);
+    print('goal data leliya');
 
     return goalMap;
   }
