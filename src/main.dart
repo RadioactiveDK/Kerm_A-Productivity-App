@@ -1,21 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:path/path.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
 
 Map< String , List<String>? > goalsMap = {};
-List<String> questList = [];
+Map< String, String > questList = {};
 
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
 
   KermDatabase kdb = KermDatabase();
+  // await kdb.initialiseDB();
+
   if( !(await databaseFactory.databaseExists('KermDB.db')) ) {
-    print('initializeeeeeeeeeee');
     await kdb.initialiseDB();
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setBool('isLocked', false);
   }
 
   goalsMap = await kdb.getGoalData();
   questList = await kdb.getQuestData();
+
 
   runApp(const MyApp());
 }
@@ -134,9 +139,24 @@ class MyDailyQuest extends StatefulWidget {
 class _MyDailyQuestState extends State<MyDailyQuest> {
   bool isLocked = false;
 
+  @override
+  void initState(){
+    super.initState();
+    loadBool();
+  }
+
+  Future<void> loadBool() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      isLocked = prefs.getBool('isLocked')!;
+    });
+  }
+
   void updateQuests()async{
     KermDatabase kdb = KermDatabase();
-    await kdb.updateQuestData(questList);
+    await kdb.updateQuestData();
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setBool('isLocked', isLocked);
     setState(() {});
   }
   updateState(){
@@ -144,15 +164,15 @@ class _MyDailyQuestState extends State<MyDailyQuest> {
   }
   createQuestWidgets(){
     var questWidgets = <Widget>[];
-    for (var element in questList) {
+    questList.forEach((key, value) {
       questWidgets.add(
           MyQuestWidget(
             isLocked: isLocked,
-            questName: element,
+            questName: key,
             updateState: updateState(),
           )
       );
-    }
+    });
     return questWidgets;
   }
 
@@ -193,6 +213,7 @@ class _MyDailyQuestState extends State<MyDailyQuest> {
                       onPressed: (){},
                       onLongPress: (){
                         isLocked = true;
+                        questList.forEach((key, value) {questList[key] ='0${value[1]}';});
                         updateQuests();
                         Navigator.pop(context);
                       },
@@ -218,7 +239,7 @@ class _MyDailyQuestState extends State<MyDailyQuest> {
                       icon: const Icon(Icons.done_outline_sharp),
                       onPressed: (){
                         if(myController.text!='') {
-                          questList.add(myController.text);
+                          questList[myController.text]='00';
                           myController.text='';
                           updateQuests();
                           Navigator.pop(context);
@@ -234,7 +255,7 @@ class _MyDailyQuestState extends State<MyDailyQuest> {
       body: Container(
         padding: const EdgeInsets.all(5),
         child: SingleChildScrollView(
-          child: Column(
+          child: Column(            
             children: createQuestWidgets(),
           ),
         ),
@@ -244,19 +265,20 @@ class _MyDailyQuestState extends State<MyDailyQuest> {
 }
 
 class MyQuestWidget extends StatefulWidget {
-  String? questName;
+  String questName;
   bool isLocked;
   VoidCallback updateState;
 
-  MyQuestWidget({Key? key, this.questName, required this.isLocked,required this.updateState}) : super(key: key);
+  MyQuestWidget({Key? key, required this.questName,required this.isLocked,required this.updateState}) : super(key: key);
 
   @override
   State<MyQuestWidget> createState() => _MyQuestWidgetState();
 }
 class _MyQuestWidgetState extends State<MyQuestWidget> {
+
   @override
   Widget build(BuildContext context) {
-    return ElevatedButton(
+    return Padding(padding: EdgeInsets.all(3),child:ElevatedButton(
       onPressed: (){},
       onLongPress:(){
         showDialog(
@@ -277,11 +299,14 @@ class _MyQuestWidgetState extends State<MyQuestWidget> {
                       },
                       child: const Text('Delete Quest')
                     ),
-                    if(widget.isLocked)TextButton(
-                        child: const Text('Mark as done',),
+                    if(widget.isLocked )TextButton(
+                        child: (questList[widget.questName]![0]=='0')?const Text('Mark as done'):const Text('Mark as undone'),
                         onPressed: (){},
                         onLongPress:(){
-                          setState((){});
+                          (questList[widget.questName]![0]=='0')?
+                            questList[widget.questName]='1${questList[widget.questName]![1]}':
+                          questList[widget.questName]='0${questList[widget.questName]![1]}';
+                          widget.updateState();
                           Navigator.pop(context);
                         }
                     ),
@@ -297,7 +322,7 @@ class _MyQuestWidgetState extends State<MyQuestWidget> {
         );
       },
       style: ElevatedButton.styleFrom(
-        primary: Colors.tealAccent,
+        primary: questList[widget.questName]![0] == '0' ?Colors.tealAccent:Colors.grey,
         shadowColor: Colors.white,
         shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20.0)
@@ -305,13 +330,35 @@ class _MyQuestWidgetState extends State<MyQuestWidget> {
       ),
       child: Container(
         alignment: Alignment.centerLeft,
-        child: Text(
-          widget.questName!,
-          textAlign: TextAlign.start,
-          style: const TextStyle(color: Colors.black),
+        margin: const EdgeInsets.all(5),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(widget.questName,textAlign: TextAlign.start,style: const TextStyle(color: Colors.black)),
+          DropdownButton<String>(
+            value: questList[widget.questName]![1],
+            icon: const Icon(Icons.arrow_drop_down),
+            elevation: 16,
+            style: const TextStyle(color: Colors.deepPurple),
+            underline: Container(
+              height: 2,
+              color: Colors.deepPurpleAccent,
+            ),
+            onChanged: widget.isLocked? null:(String? value) {
+              questList[widget.questName] = questList[widget.questName]![0] + value!;
+              widget.updateState();
+            },
+            items: ['0','1','2','3','4','5'].map<DropdownMenuItem<String>>((String value) {
+              return DropdownMenuItem<String>(
+                value: value,
+                child: Text(value),
+              );
+            }).toList(),
+          )
+          ]
         ),
       ),
-    );
+    ));
   }
 }
 
@@ -647,9 +694,11 @@ class KermDatabase {
   }
 
   Future<void> initialiseDB()async{
+    print('initialised');
     Database _db = await openDB();
     await _db.insert('KermData', {'id': 0, 'ltg': '1', 'stg': '2'}, conflictAlgorithm: ConflictAlgorithm.replace);
-    await _db.insert('KermData', {'id': 1, 'ltg': '1', 'stg': '2'}, conflictAlgorithm: ConflictAlgorithm.replace);
+    await _db.insert('KermData', {'id': 1, 'ltg': '1', 'stg': '00'}, conflictAlgorithm: ConflictAlgorithm.replace);
+    await _db.insert('KermData', {'id': 2, 'ltg': '0', 'stg': ''}, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   Future<void> updateGoalData(Map<String,List<String>?> myGoalsMap)async{
@@ -711,19 +760,22 @@ class KermDatabase {
     return goalMap;
   }
 
-  Future<void> updateQuestData(List<String> questList)async{
+  Future<void> updateQuestData()async{
     Database db = await openDB();
-    Map<String,dynamic> myMap = {'id':1,'stg':''};
+    Map<String,dynamic> myMap = {'id':1};
 
     print(questList);
 
     List<String> ltg = [];
+    List<String> stg = [];
 
-    for (var element in questList) {
-      ltg.add(element);
-    }
+    questList.forEach((key, value) {
+      ltg.add(key);
+      stg.add(value);
+    });
 
     myMap['ltg']=ltg.join('\n');
+    myMap['stg']=stg.join('\n');
 
     print(myMap);
 
@@ -734,7 +786,7 @@ class KermDatabase {
       whereArgs: [1],
     );
   }
-  Future< List<String> > getQuestData() async {
+  Future< Map<String,String> > getQuestData() async {
     final db = await openDB();
 
     final List<Map<String, dynamic>> dataList = await db.query('KermData');
@@ -744,8 +796,18 @@ class KermDatabase {
     print(dataMap);
 
     List<String> ltg = dataMap['ltg'].split('\n');
+    List<String> stg = dataMap['stg'].split('\n');
 
     print(ltg);
-    return ltg;
+    print(stg);
+
+    Map<String,String> mp={};
+
+    for(int i=0;i<ltg.length;i++){
+      mp[ltg[i]]=stg[i];
+    }
+    print(mp);
+    return mp;
   }
+
 }
