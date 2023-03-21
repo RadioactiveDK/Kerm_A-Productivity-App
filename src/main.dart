@@ -147,7 +147,7 @@ class _MyDailyQuestState extends State<MyDailyQuest> {
     for (var element in questList) {
       questWidgets.add(
           MyQuestWidget(
-            questList: questList,
+            isLocked: isLocked,
             questName: element,
             updateState: updateState(),
           )
@@ -167,41 +167,46 @@ class _MyDailyQuestState extends State<MyDailyQuest> {
   Widget build(BuildContext context) {
     return Scaffold(
       floatingActionButton: FloatingActionButton(
-        backgroundColor: Colors.white,
-          child: const Icon(Icons.add,color: Colors.black,),
+          backgroundColor: Colors.white,
+          child: const Icon(Icons.add,color: Colors.black,size: 25,),
           onPressed: (){
             showDialog(
               context: context,
               builder: (context) {
                 return AlertDialog(
                   title: const Text(
-                    'Add a Quest',
+                    'Manage your Quests',
                     style: TextStyle(color: Colors.black),
                   ),
-                  content: TextField(
+                  content: !isLocked ? TextField(
                     controller: myController,
                     style: const TextStyle(
                         color: Colors.black,
                         fontWeight: FontWeight.w400
                     ),
-                  ),
+                    decoration: const InputDecoration(
+                      labelText: 'Add a Quest',
+                    ),
+                  ):const Text('End Quests',style: TextStyle(color: Colors.black),),
                   actions: [
-                    // if(!isLocked)TextButton(
-                    //   onPressed: (){},
-                    //   onLongPress: (){
-                    //     isLocked = true;
-                    //     Navigator.pop(context);
-                    //   },
-                    //   child: const Text('Start Quests'),
-                    // ),
-                    // if(isLocked)TextButton(
-                    //     onPressed: (){},
-                    //     onLongPress: (){
-                    //       isLocked=false;
-                    //       Navigator.pop(context);
-                    //     },
-                    //     child: const Text('End Quests')
-                    // ),
+                    if(!isLocked)TextButton(
+                      onPressed: (){},
+                      onLongPress: (){
+                        isLocked = true;
+                        updateQuests();
+                        Navigator.pop(context);
+                      },
+                      child: const Text('Start Quests'),
+                    ),
+                    if(isLocked)TextButton(
+                        onPressed: (){},
+                        onLongPress: (){
+                          isLocked=false;
+                          updateQuests();
+                          Navigator.pop(context);
+                        },
+                        child: const Text('End Quests')
+                    ),
                     IconButton(
                         onPressed: (){
                           myController.text='';
@@ -209,7 +214,7 @@ class _MyDailyQuestState extends State<MyDailyQuest> {
                         },
                         icon: const Icon(Icons.close_sharp)
                     ),
-                    IconButton(
+                    if(!isLocked)IconButton(
                       icon: const Icon(Icons.done_outline_sharp),
                       onPressed: (){
                         if(myController.text!='') {
@@ -240,10 +245,10 @@ class _MyDailyQuestState extends State<MyDailyQuest> {
 
 class MyQuestWidget extends StatefulWidget {
   String? questName;
-  List<String>? questList;
+  bool isLocked;
   VoidCallback updateState;
 
-  MyQuestWidget({Key? key, this.questName,this.questList,required this.updateState}) : super(key: key);
+  MyQuestWidget({Key? key, this.questName, required this.isLocked,required this.updateState}) : super(key: key);
 
   @override
   State<MyQuestWidget> createState() => _MyQuestWidgetState();
@@ -260,27 +265,32 @@ class _MyQuestWidgetState extends State<MyQuestWidget> {
             return AlertDialog(
               title: const Text('Options',style: TextStyle(color: Colors.black),),
               actions: [
-                TextButton(
-                    onPressed: (){},
-                    onLongPress:(){
-                      widget.questList!.remove(widget.questName);
-                      widget.updateState();
-                      Navigator.pop(context);
-                    },
-                    child: const Text('Delete Quest')
-                ),
-                IconButton(
-                    onPressed: (){Navigator.pop(context);},
-                    icon: const Icon(Icons.close_sharp)
-                ),
-                TextButton(
-                    child: const Text('Mark as done',),
-                    onPressed: (){},
-                    onLongPress:(){
-                      setState((){});
-                      Navigator.pop(context);
-                    }
-                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children:[
+                    if(!widget.isLocked)TextButton(
+                      onPressed: (){},
+                      onLongPress:(){
+                        questList.remove(widget.questName);
+                        widget.updateState();
+                        Navigator.pop(context);
+                      },
+                      child: const Text('Delete Quest')
+                    ),
+                    if(widget.isLocked)TextButton(
+                        child: const Text('Mark as done',),
+                        onPressed: (){},
+                        onLongPress:(){
+                          setState((){});
+                          Navigator.pop(context);
+                        }
+                    ),
+                    IconButton(
+                        onPressed: (){Navigator.pop(context);},
+                        icon: const Icon(Icons.close_sharp)
+                    ),
+                  ]
+                )
               ],
             );
           },
@@ -471,7 +481,10 @@ class _MyGoalWidgetState extends State<MyGoalWidget> {
                       style: TextStyle(color: Colors.black),
                     ),
                     actions: [
-                      TextButton(
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children:[
+                          TextButton(
                         onPressed:(){},
                         onLongPress: (){
                           widget.goalsMap!.remove(widget.goalName);
@@ -481,16 +494,18 @@ class _MyGoalWidgetState extends State<MyGoalWidget> {
                         },
                         child: const Text('Delete Goal'),
                       ),
-                      IconButton(
+                          IconButton(
                           onPressed: (){myController.text='';Navigator.pop(context);},
                           icon: const Icon(Icons.close_sharp)
                       ),
-                      TextButton(
+                          TextButton(
                           onPressed: (){},
                           onLongPress:(){
                             Navigator.pop(context);
                           },
                           child: const Text('Achieved')
+                      )
+                        ],
                       )
                     ],
                   );
@@ -572,7 +587,10 @@ class _MyTaskWidgetState extends State<MyTaskWidget> {
             return AlertDialog(
               title: const Text('Options',style: TextStyle(color: Colors.black),),
               actions: [
-                TextButton(
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    TextButton(
                     onPressed: (){},
                     onLongPress:(){
                       widget.goalsMap![widget.goalName!]!.remove(widget.myTask);
@@ -581,11 +599,11 @@ class _MyTaskWidgetState extends State<MyTaskWidget> {
                     },
                     child: const Text('Delete Milestone')
                 ),
-                IconButton(
+                    IconButton(
                     onPressed: (){Navigator.pop(context);},
                     icon: const Icon(Icons.close_sharp)
                 ),
-                TextButton(
+                    TextButton(
                     child: const Text('Achieved',),
                     onPressed: (){},
                     onLongPress:(){
@@ -593,6 +611,8 @@ class _MyTaskWidgetState extends State<MyTaskWidget> {
                       Navigator.pop(context);
                     }
                 ),
+                  ]
+                )
               ],
             );
           },
