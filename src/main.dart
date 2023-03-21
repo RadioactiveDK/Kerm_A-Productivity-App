@@ -29,8 +29,8 @@ class MyApp extends StatelessWidget {
       title: 'Kerm',
       theme: ThemeData(
           textTheme: Theme.of(context).textTheme.apply(
-                bodyColor: Colors.white,
-              ),
+            bodyColor: Colors.white,
+          ),
           scaffoldBackgroundColor: Colors.black,
           iconTheme: const IconThemeData(
             color: Colors.black,
@@ -167,7 +167,8 @@ class _MyDailyQuestState extends State<MyDailyQuest> {
   Widget build(BuildContext context) {
     return Scaffold(
       floatingActionButton: FloatingActionButton(
-          child: const Icon(Icons.add,color: Colors.white,),
+        backgroundColor: Colors.white,
+          child: const Icon(Icons.add,color: Colors.black,),
           onPressed: (){
             showDialog(
               context: context,
@@ -289,7 +290,7 @@ class _MyQuestWidgetState extends State<MyQuestWidget> {
         primary: Colors.tealAccent,
         shadowColor: Colors.white,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20.0)
+            borderRadius: BorderRadius.circular(20.0)
         ),
       ),
       child: Container(
@@ -350,44 +351,46 @@ class _MyGoalsState extends State<MyGoals> {
   Widget build(BuildContext context) {
     return Scaffold(
       floatingActionButton: FloatingActionButton(
-        child: const Icon(Icons.add,color: Colors.white,),
-        onPressed: (){
-          showDialog(
-            context: context,
-            builder: (context) {
-              return AlertDialog(
-                title: const Text(
-                  'Add a Long-term Goal',
-                  style: TextStyle(color: Colors.black),
-                ),
-                content: TextField(
-                  controller: myController,
-                  style: const TextStyle(
-                      color: Colors.black,
-                      fontWeight: FontWeight.w400
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          child: const Icon(Icons.add,color: Colors.black,),
+          onPressed: (){
+            showDialog(
+              context: context,
+              builder: (context) {
+                return AlertDialog(
+                  title: const Text(
+                    'Add a Long-term Goal',
+                    style: TextStyle(color: Colors.black),
                   ),
-                ),
-                actions: [
-                  IconButton(
-                      onPressed: (){myController.text='';Navigator.pop(context);},
-                      icon: const Icon(Icons.close_sharp)
+                  content: TextField(
+                    controller: myController,
+                    style: const TextStyle(
+                        color: Colors.black,
+                        fontWeight: FontWeight.w400
+                    ),
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.done_outline_sharp),
-                    onPressed: (){
-                      if(myController.text!='' && goalsMap[myController.text]==null) {
-                        goalsMap[myController.text]=[];
-                        myController.text='';
-                        updateGoals();
-                        Navigator.pop(context);
-                      }
-                    },
-                  ),
-                ],
-              );
-            },
-          );
-        }
+                  actions: [
+                    IconButton(
+                        onPressed: (){myController.text='';Navigator.pop(context);},
+                        icon: const Icon(Icons.close_sharp)
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.done_outline_sharp),
+                      onPressed: (){
+                        if(myController.text!='' && goalsMap[myController.text]==null) {
+                          goalsMap[myController.text]=[];
+                          myController.text='';
+                          updateGoals();
+                          Navigator.pop(context);
+                        }
+                      },
+                    ),
+                  ],
+                );
+              },
+            );
+          }
       ),
       body: Container(
         padding: const EdgeInsets.all(5),
@@ -423,15 +426,15 @@ class _MyGoalWidgetState extends State<MyGoalWidget> {
     var milestoneWidgets=<Widget>[];
     for (var element in widget.milestones!) {
       milestoneWidgets.add(
-        Container(
-          width: double.infinity,
-          child: MyTaskWidget(
-            myTask: element,
-            goalsMap: widget.goalsMap,
-            updateState: widget.updateState,
-            goalName: widget.goalName,
+          Container(
+              width: double.infinity,
+              child: MyTaskWidget(
+                myTask: element,
+                goalsMap: widget.goalsMap,
+                updateState: widget.updateState,
+                goalName: widget.goalName,
+              )
           )
-        )
       );
     }
     return Column(children: milestoneWidgets);
@@ -487,7 +490,7 @@ class _MyGoalWidgetState extends State<MyGoalWidget> {
                           onLongPress:(){
                             Navigator.pop(context);
                           },
-                          child: const Text('Mark as done')
+                          child: const Text('Achieved')
                       )
                     ],
                   );
@@ -532,13 +535,13 @@ class _MyGoalWidgetState extends State<MyGoalWidget> {
               );
             },
             child: Text(
-                widget.goalName!,
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
-              ),
+              widget.goalName!,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+            ),
           ),
           Padding(
-            padding: const EdgeInsets.only(bottom: 1),
-            child: createMilestoneWidgets()
+              padding: const EdgeInsets.only(bottom: 1),
+              child: createMilestoneWidgets()
           )
         ],
       ),
@@ -583,12 +586,12 @@ class _MyTaskWidgetState extends State<MyTaskWidget> {
                     icon: const Icon(Icons.close_sharp)
                 ),
                 TextButton(
-                  child: const Text('Mark as done',),
-                  onPressed: (){},
-                  onLongPress:(){
+                    child: const Text('Achieved',),
+                    onPressed: (){},
+                    onLongPress:(){
                       setState((){});
                       Navigator.pop(context);
-                  }
+                    }
                 ),
               ],
             );
@@ -628,7 +631,7 @@ class KermDatabase {
     await _db.insert('KermData', {'id': 0, 'ltg': '1', 'stg': '2'}, conflictAlgorithm: ConflictAlgorithm.replace);
     await _db.insert('KermData', {'id': 1, 'ltg': '1', 'stg': '2'}, conflictAlgorithm: ConflictAlgorithm.replace);
   }
-  
+
   Future<void> updateGoalData(Map<String,List<String>?> myGoalsMap)async{
     Database db = await openDB();
     Map<String,dynamic> myMap={'id':0};
@@ -649,10 +652,10 @@ class KermDatabase {
     print(myMap);
 
     await db.update(
-        'KermData',
-        myMap,
-        where: 'id = ?',
-        whereArgs: [0],
+      'KermData',
+      myMap,
+      where: 'id = ?',
+      whereArgs: [0],
     );
   }
   Future< Map< String,List<String>? > > getGoalData() async {
@@ -663,7 +666,7 @@ class KermDatabase {
     print(dataList);
 
     Map<String, dynamic> dataMap = dataList[0];
-  print(dataMap);
+    print(dataMap);
 
     List<String>? ltg;
     List<String>? stg;
