@@ -3,14 +3,15 @@ import 'package:path/path.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
 
-Map< String , List<String>? > goalsMap = {};
+Map< String, List<String>? > goalsMap = {};
 Map< String, String > questList = {};
+List< int > scoreList = [];
 
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
 
   KermDatabase kdb = KermDatabase();
-  // await kdb.initialiseDB();
+  await kdb.initialiseDB();
 
   if( !(await databaseFactory.databaseExists('KermDB.db')) ) {
     await kdb.initialiseDB();
@@ -20,7 +21,7 @@ void main() async{
 
   goalsMap = await kdb.getGoalData();
   questList = await kdb.getQuestData();
-
+  scoreList = await kdb.getScoreData();
 
   runApp(const MyApp());
 }
@@ -49,7 +50,7 @@ class MyApp extends StatelessWidget {
           )
       ),
       home: const DefaultTabController(
-        length: 2,
+        length: 3,
         child: MyHomePage(),
       ),
     );
@@ -92,6 +93,12 @@ class MyHomePage extends StatelessWidget {
                   style: TextStyle(color: Colors.black),
                 ),
               ),
+              Tab(
+                child: Text(
+                  'Scores',
+                  style: TextStyle(color: Colors.black),
+                ),
+              ),
             ],
           ),
         ),
@@ -99,6 +106,7 @@ class MyHomePage extends StatelessWidget {
           children: [
             MyDailyQuest(),
             MyGoals(),
+            MyScores(),
           ],
         ));
   }
@@ -128,6 +136,9 @@ class _MySettingsState extends State<MySettings> {
     );
   }
 }
+
+
+
 
 // Daily Quest Tab
 class MyDailyQuest extends StatefulWidget {
@@ -365,6 +376,8 @@ class _MyQuestWidgetState extends State<MyQuestWidget> {
 
 
 
+
+
 // Goals tab
 class MyGoals extends StatefulWidget {
   const MyGoals({Key? key}) : super(key: key);
@@ -520,6 +533,7 @@ class _MyGoalWidgetState extends State<MyGoalWidget> {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           TextButton(
+            style: TextButton.styleFrom(primary:Colors.black,textStyle: const TextStyle(fontSize: 20,fontWeight: FontWeight.bold)),
             onLongPress: (){
               showDialog(
                 context: context,
@@ -641,26 +655,26 @@ class _MyTaskWidgetState extends State<MyTaskWidget> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     TextButton(
-                    onPressed: (){},
-                    onLongPress:(){
-                      widget.goalsMap![widget.goalName!]!.remove(widget.myTask);
-                      widget.updateState();
-                      Navigator.pop(context);
-                    },
-                    child: const Text('Delete Milestone')
-                ),
+                        onPressed: (){},
+                        onLongPress:(){
+                          widget.goalsMap![widget.goalName!]!.remove(widget.myTask);
+                          widget.updateState();
+                          Navigator.pop(context);
+                        },
+                        child: const Text('Delete Milestone')
+                    ),
                     IconButton(
-                    onPressed: (){Navigator.pop(context);},
-                    icon: const Icon(Icons.close_sharp)
-                ),
+                        onPressed: (){Navigator.pop(context);},
+                        icon: const Icon(Icons.close_sharp)
+                    ),
                     TextButton(
-                    child: const Text('Achieved',),
-                    onPressed: (){},
-                    onLongPress:(){
-                      setState((){});
-                      Navigator.pop(context);
-                    }
-                ),
+                        child: const Text('Achieved',),
+                        onPressed: (){},
+                        onLongPress:(){
+                          widget.updateState();
+                          Navigator.pop(context);
+                        }
+                    ),
                   ]
                 )
               ],
@@ -682,6 +696,132 @@ class _MyTaskWidgetState extends State<MyTaskWidget> {
 
 
 
+
+
+// History
+class MyScores extends StatefulWidget {
+  const MyScores({Key? key}) : super(key: key);
+
+  @override
+  State<MyScores> createState() => _MyScoresState();
+}
+class _MyScoresState extends State<MyScores> {
+  setColor(int score){
+    if(score<=1) {
+      return Colors.red;
+    }
+    else if(score == 2){
+      return Colors.amber[900];
+    }
+    else if(score == 3){
+      return Colors.orange;
+    }
+    else if(score == 4){
+      return Colors.yellow;
+    }
+    else if(score == 5){
+      return Colors.lime;
+    }
+    else if(score == 6){
+      return Colors.lightGreen;
+    }
+    else if(score == 7){
+      return Colors.greenAccent[700];
+    }
+    else if(score == 8){
+      return const Color.fromARGB(255, 0, 255, 0);
+    }
+    else if(score == 9){
+      return Colors.black;
+    }
+  }
+  createWeekBoxes(){
+    var boxes = <Widget>[];
+    List<String> week = ['M','T','W','T','F','S','S'];
+    for(int i =0 ;i<7;i++) {
+      boxes.add(
+          Padding(
+              padding: const EdgeInsets.all(4),
+              child: Container(
+                height: 45,width: 45,
+                decoration: BoxDecoration(
+                    color: setColor(scoreList[52+i]),
+                    borderRadius: BorderRadius.circular(23)
+                ),
+                child: Center(
+                  child:Text(week[i],style: TextStyle(color: scoreList[52+i]==9?Colors.white:Colors.black,fontWeight: FontWeight.bold,fontSize: 20),),
+                )
+              )
+          )
+      );
+    }
+    return Row(children: boxes);
+  }
+
+  createBoxes(int size,int init){
+    var bubbles = <Widget>[];
+    for(int i = 0 ; i<size ; i++){
+      bubbles.add(
+        Padding(
+          padding: const EdgeInsets.all(4),
+          child: Container(
+            height: 45,width: 45,
+            decoration: BoxDecoration(
+                color: setColor(scoreList[init-1+7*i]),
+                // gradient: scoreList[init-1+7*i]==9 ? const RadialGradient(
+                //   colors: [Colors.white, Colors.black],
+                //   radius: 0.75,
+                // ):null,
+                borderRadius: BorderRadius.circular(10)
+            ),
+            child: Center(
+              child: Text(
+                (init+7*i).toString(),
+                style: TextStyle(
+                    color: scoreList[init-1+7*i]==9?Colors.white:Colors.black,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 20
+                ),
+              ),
+            ),
+          )
+        )
+      );
+    }
+    return bubbles;
+  }
+  createScoreWidgets(int size){
+    var scoreWidgets = <Widget>[];
+    for(int i = 1;i<=size;i++) {
+      scoreWidgets.add(
+        Column(
+          children: createBoxes((i<=3)?8:7,i)
+        )
+      );
+    }
+    return scoreWidgets;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: double.infinity,
+      padding: const EdgeInsets.all(10),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Container(child:Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children:createScoreWidgets(7)
+          )),
+          createWeekBoxes()
+        ]
+      )
+    );
+  }
+}
+
 // Database
 class KermDatabase {
   Future<Database> openDB()async{
@@ -701,7 +841,7 @@ class KermDatabase {
     Database _db = await openDB();
     await _db.insert('KermData', {'id': 0, 'ltg': 'Add a Goal', 'stg': 'Add a Milestone'}, conflictAlgorithm: ConflictAlgorithm.replace);
     await _db.insert('KermData', {'id': 1, 'ltg': 'Add a Quest', 'stg': '00'}, conflictAlgorithm: ConflictAlgorithm.replace);
-    // await _db.insert('KermData', {'id': 2, 'ltg': '0', 'stg': ''}, conflictAlgorithm: ConflictAlgorithm.replace);
+    await _db.insert('KermData', {'id': 2, 'ltg': '0-2-3-4-5-6-7-8-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9', 'stg': ''}, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   Future<void> updateGoalData(Map<String,List<String>?> myGoalsMap)async{
@@ -813,4 +953,44 @@ class KermDatabase {
     return mp;
   }
 
+  Future<void> updateScoreData()async{
+    Database db = await openDB();
+    Map<String,dynamic> myMap={'id':2,'stg':''};
+    List<String> ltg=[];
+
+    for(var i in scoreList){
+      ltg.add(i.toString());
+    }
+
+    myMap['ltg']=ltg.join('\n');
+
+    print(myMap);
+
+    await db.update(
+      'KermData',
+      myMap,
+      where: 'id = ?',
+      whereArgs: [2],
+    );
+  }
+  Future< List<int> > getScoreData() async {
+    final db = await openDB();
+
+    final List<Map<String, dynamic>> dataList = await db.query('KermData');
+    Map<String, dynamic> dataMap = dataList[2];
+
+    print(dataList);
+    print(dataMap);
+
+    List<String> ltg = dataMap['ltg'].split('-');
+    print(ltg);
+
+    List<int> myList = [];
+
+    for(int i=0;i<ltg.length;i++){
+      myList.add( int.parse(ltg[i]) );
+    }
+    print(myList);
+    return myList;
+  }
 }
