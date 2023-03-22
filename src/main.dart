@@ -165,13 +165,13 @@ class _MyDailyQuestState extends State<MyDailyQuest> {
   createQuestWidgets(){
     var questWidgets = <Widget>[];
     questList.forEach((key, value) {
-      questWidgets.add(
-          MyQuestWidget(
-            isLocked: isLocked,
-            questName: key,
-            updateState: updateState(),
-          )
-      );
+    questWidgets.add(
+        MyQuestWidget(
+          isLocked: isLocked,
+          questName: key,
+          updateState: updateState(),
+        )
+    );
     });
     return questWidgets;
   }
@@ -255,7 +255,7 @@ class _MyDailyQuestState extends State<MyDailyQuest> {
       body: Container(
         padding: const EdgeInsets.all(5),
         child: SingleChildScrollView(
-          child: Column(            
+          child: Column(
             children: createQuestWidgets(),
           ),
         ),
@@ -294,6 +294,7 @@ class _MyQuestWidgetState extends State<MyQuestWidget> {
                       onPressed: (){},
                       onLongPress:(){
                         questList.remove(widget.questName);
+                        if(questList.isEmpty)questList['Add a Quest']='00';
                         widget.updateState();
                         Navigator.pop(context);
                       },
@@ -394,6 +395,7 @@ class _MyGoalsState extends State<MyGoals> {
           )
       );
     });
+
     return goalWidgets;
   }
 
@@ -532,14 +534,15 @@ class _MyGoalWidgetState extends State<MyGoalWidget> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children:[
                           TextButton(
-                        onPressed:(){},
-                        onLongPress: (){
-                          widget.goalsMap!.remove(widget.goalName);
-                          myController.text='';
-                          widget.updateState();
-                          Navigator.pop(context);
-                        },
-                        child: const Text('Delete Goal'),
+                            onPressed:(){},
+                            onLongPress: (){
+                              widget.goalsMap!.remove(widget.goalName);
+                              myController.text='';
+                              if(widget.goalsMap!.isEmpty)goalsMap['Add a Goal']=['Add a Milestone'];
+                              widget.updateState();
+                              Navigator.pop(context);
+                            },
+                            child: const Text('Delete Goal'),
                       ),
                           IconButton(
                           onPressed: (){myController.text='';Navigator.pop(context);},
@@ -696,9 +699,9 @@ class KermDatabase {
   Future<void> initialiseDB()async{
     print('initialised');
     Database _db = await openDB();
-    await _db.insert('KermData', {'id': 0, 'ltg': '1', 'stg': '2'}, conflictAlgorithm: ConflictAlgorithm.replace);
-    await _db.insert('KermData', {'id': 1, 'ltg': '1', 'stg': '00'}, conflictAlgorithm: ConflictAlgorithm.replace);
-    await _db.insert('KermData', {'id': 2, 'ltg': '0', 'stg': ''}, conflictAlgorithm: ConflictAlgorithm.replace);
+    await _db.insert('KermData', {'id': 0, 'ltg': 'Add a Goal', 'stg': 'Add a Milestone'}, conflictAlgorithm: ConflictAlgorithm.replace);
+    await _db.insert('KermData', {'id': 1, 'ltg': 'Add a Quest', 'stg': '00'}, conflictAlgorithm: ConflictAlgorithm.replace);
+    // await _db.insert('KermData', {'id': 2, 'ltg': '0', 'stg': ''}, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   Future<void> updateGoalData(Map<String,List<String>?> myGoalsMap)async{
@@ -773,9 +776,9 @@ class KermDatabase {
       ltg.add(key);
       stg.add(value);
     });
-
     myMap['ltg']=ltg.join('\n');
     myMap['stg']=stg.join('\n');
+
 
     print(myMap);
 
