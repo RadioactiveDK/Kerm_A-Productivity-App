@@ -11,7 +11,7 @@ void main() async{
   WidgetsFlutterBinding.ensureInitialized();
 
   KermDatabase kdb = KermDatabase();
-  await kdb.initialiseDB();
+  // await kdb.initialiseDB();
 
   if( !(await databaseFactory.databaseExists('KermDB.db')) ) {
     await kdb.initialiseDB();
@@ -234,6 +234,14 @@ class _MyDailyQuestState extends State<MyDailyQuest> {
                         onPressed: (){},
                         onLongPress: (){
                           isLocked=false;
+                          DateTime timeInfo = DateTime.now();
+                          double totalMarks = 0;
+                          double myMarks = 0;
+                          questList.forEach((key, value) {
+                            totalMarks = totalMarks + int.parse(value[1]);
+                            myMarks = myMarks + int.parse(value[1])*int.parse(value[0]);
+                          });
+                          scoreList[51+timeInfo.weekday]=(myMarks*8/totalMarks).round();
                           updateQuests();
                           Navigator.pop(context);
                         },
