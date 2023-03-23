@@ -7,6 +7,7 @@ import 'package:week_of_year/date_week_extensions.dart';
 Map< String, List<String>? > goalsMap = {};
 Map< String, String > questList = {};
 List< int > scoreList = [];
+DateTime timeInfo = DateTime.now();
 
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
@@ -14,9 +15,12 @@ void main() async{
   KermDatabase kdb = KermDatabase();
   // await kdb.initialiseDB();
 
+  final prefs = await SharedPreferences.getInstance();
+
   if( !(await databaseFactory.databaseExists('KermDB.db')) ) {
     await kdb.initialiseDB();
-    final prefs = await SharedPreferences.getInstance();
+    prefs.setInt('year', timeInfo.year);
+    prefs.setInt('week', timeInfo.weekOfYear);
     prefs.setBool('isLocked', false);
   }
 
@@ -24,6 +28,26 @@ void main() async{
   questList = await kdb.getQuestData();
   scoreList = await kdb.getScoreData();
 
+  if(timeInfo.year!=prefs.getInt('year')){
+    var temp = '9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9'.split('-');
+    for(int i = 0;i<52;i++){
+      scoreList[i]=int.parse(temp[i]);
+    }
+    await kdb.updateScoreData();
+    prefs.setInt('year',timeInfo.year);
+  }
+  if(timeInfo.weekOfYear!=prefs.getInt('week')){
+    int weekScore=0;
+    for(int i = 0;i<7;i++){
+      if(scoreList[52+i]!=9){
+        weekScore+=scoreList[52+i];
+        scoreList[52+i]=9;
+      }
+    }
+    scoreList[prefs.getInt('week')!-1]=(weekScore/7).round();
+    prefs.setInt('week',timeInfo.weekOfYear);
+    await kdb.updateScoreData();
+  }
   runApp(const MyApp());
 }
 class MyApp extends StatelessWidget {
@@ -150,6 +174,7 @@ class MyDailyQuest extends StatefulWidget {
 }
 class _MyDailyQuestState extends State<MyDailyQuest> {
   bool isLocked = false;
+  var prefs;
 
   @override
   void initState(){
@@ -158,7 +183,7 @@ class _MyDailyQuestState extends State<MyDailyQuest> {
   }
 
   Future<void> loadBool() async {
-    final prefs = await SharedPreferences.getInstance();
+    prefs = await SharedPreferences.getInstance();
     setState(() {
       isLocked = prefs.getBool('isLocked')!;
     });
@@ -167,6 +192,7 @@ class _MyDailyQuestState extends State<MyDailyQuest> {
   void updateQuests()async{
     KermDatabase kdb = KermDatabase();
     await kdb.updateQuestData();
+    await kdb.updateScoreData();
     final prefs = await SharedPreferences.getInstance();
     prefs.setBool('isLocked', isLocked);
     setState(() {});
@@ -205,13 +231,13 @@ class _MyDailyQuestState extends State<MyDailyQuest> {
             showDialog(
               context: context,
               builder: (context) {
-                DateTime timeInfo = DateTime.now();
                 return AlertDialog(
                   title: const Text(
                     'Manage your Quests',
                     style: TextStyle(color: Colors.black),
                   ),
-                  content: !isLocked ? TextField(
+                  content: !isLocked ?
+                      TextField(
                     controller: myController,
                     style: const TextStyle(
                         color: Colors.black,
@@ -220,35 +246,24 @@ class _MyDailyQuestState extends State<MyDailyQuest> {
                     decoration: const InputDecoration(
                       labelText: 'Add a Quest',
                     ),
-                  ):const Text('End Quests',style: TextStyle(color: Colors.black),),
+                  ):
+                      const Text('End Quests',style: TextStyle(color: Colors.black),),
                   actions: [
                     if(!isLocked)TextButton(
                       onPressed: (){},
                       onLongPress: (){
                         isLocked = true;
                         questList.forEach((key, value) {questList[key] ='0${value[1]}';});
-                        DateTime timeInfo = DateTime.now();
-                        if(timeInfo.weekday==7 && scoreList[58]!=9){
-                          int weekScore=0;
+                        if(timeInfo.weekOfYear!=prefs.getInt('week')||scoreList[58]!=9){
                           for(int i = 0;i<7;i++){
-                            if(scoreList[52+i]!=9) {
-                                weekScore += scoreList[52 + i];
-                                scoreList[52 + i] = 9;
-                            }
+                            scoreList[52+i]=9;
                           }
-                          if(timeInfo.isLeapYear){
-                            if(timeInfo.month!=1 || (timeInfo.day!= 1 && timeInfo.day!=2)){
-                              scoreList[timeInfo.weekOfYear]=(weekScore/7).round();
-                            }
+                          if(timeInfo.weekOfYear!=prefs.getInt('week')) {
+                            prefs.setInt('week', timeInfo.weekOfYear);
                           } else {
-                            if(timeInfo.month!=1 || timeInfo.day!= 1){
-                              print(timeInfo.weekOfYear);
-                              scoreList[timeInfo.weekOfYear-1]=(weekScore/7).round();
-                            }
+                            prefs.setInt('week', timeInfo.weekOfYear+1);
                           }
                         }
-                        KermDatabase kdb = KermDatabase();
-                        kdb.updateScoreData();
                         updateQuests();
                         Navigator.pop(context);
                       },
@@ -267,12 +282,16 @@ class _MyDailyQuestState extends State<MyDailyQuest> {
                               isLocked=false;
                               scoreList[51 + timeInfo.weekday] = totalMarks == 0
                                   ? 0
-                                  : (myMarks * 8 / totalMarks).round();
-                              updateQuests();
+                                  : (myMarks *8 / totalMarks).round();
+
                               KermDatabase kdb = KermDatabase();
                               kdb.updateScoreData();
+                              prefs.setInt('week',timeInfo.weekOfYear);
+                              prefs.setInt('year',timeInfo.year);
+
+                              updateQuests();
                             }
-                            Navigator.pop(context);
+                          Navigator.pop(context);
                         },
                         child: Text('End Quests',style: TextStyle(color: scoreList[timeInfo.weekday+51]==9?Colors.blue:Colors.red,)
                         )
@@ -744,7 +763,6 @@ class MyScores extends StatefulWidget {
   State<MyScores> createState() => _MyScoresState();
 }
 class _MyScoresState extends State<MyScores> {
-  DateTime timeInfo = DateTime.now();
   setColor(int score){
     if(score<=1) {
       return Colors.red;
@@ -806,11 +824,7 @@ class _MyScoresState extends State<MyScores> {
           child: Container(
             height: 45,width: 45,
             decoration: BoxDecoration(
-                color: setColor(scoreList[init-1+7*i]),
-                // gradient: scoreList[init-1+7*i]==9 ? const RadialGradient(
-                //   colors: [Colors.white, Colors.black],
-                //   radius: 0.75,
-                // ):null,
+                color: init+7*i==timeInfo.weekOfYear ?Colors.blueAccent:setColor(scoreList[init-1+7*i]),
                 borderRadius: BorderRadius.circular(10)
             ),
             child: Center(
