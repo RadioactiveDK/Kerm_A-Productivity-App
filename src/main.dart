@@ -254,16 +254,6 @@ class _MyDailyQuestState extends State<MyDailyQuest> {
                       onLongPress: (){
                         isLocked = true;
                         questList.forEach((key, value) {questList[key] ='0${value[1]}';});
-                        if(timeInfo.weekOfYear!=prefs.getInt('week')||scoreList[58]!=9){
-                          for(int i = 0;i<7;i++){
-                            scoreList[52+i]=9;
-                          }
-                          if(timeInfo.weekOfYear!=prefs.getInt('week')) {
-                            prefs.setInt('week', timeInfo.weekOfYear);
-                          } else {
-                            prefs.setInt('week', timeInfo.weekOfYear+1);
-                          }
-                        }
                         updateQuests();
                         Navigator.pop(context);
                       },
@@ -283,12 +273,8 @@ class _MyDailyQuestState extends State<MyDailyQuest> {
                               scoreList[51 + timeInfo.weekday] = totalMarks == 0
                                   ? 0
                                   : (myMarks *8 / totalMarks).round();
-
                               KermDatabase kdb = KermDatabase();
                               kdb.updateScoreData();
-                              prefs.setInt('week',timeInfo.weekOfYear);
-                              prefs.setInt('year',timeInfo.year);
-
                               updateQuests();
                             }
                           Navigator.pop(context);
@@ -823,17 +809,19 @@ class _MyScoresState extends State<MyScores> {
           padding: const EdgeInsets.all(4),
           child: Container(
             height: 45,width: 45,
-            decoration: BoxDecoration(
-                color: init+7*i==timeInfo.weekOfYear ?Colors.blueAccent:setColor(scoreList[init-1+7*i]),
-                borderRadius: BorderRadius.circular(10)
-            ),
             child: Center(
-              child: Text(
-                (init+7*i).toString(),
-                style: TextStyle(
-                    color: scoreList[init-1+7*i]==9?Colors.white:Colors.black,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 20
+              child: TextButton(
+                onPressed: (){
+
+                },
+                style: TextButton.styleFrom(backgroundColor: init+7*i==timeInfo.weekOfYear? Colors.blueAccent:setColor(scoreList[init-1+7*i]),),
+                child: Text(
+                  (init+7*i).toString(),
+                  style: TextStyle(
+                      color: scoreList[init-1+7*i]==9?Colors.white:Colors.black,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 20
+                  ),
                 ),
               ),
             ),
