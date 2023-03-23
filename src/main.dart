@@ -543,7 +543,7 @@ class _MyGoalWidgetState extends State<MyGoalWidget> {
       milestoneWidgets.add(
           Container(
               width: double.infinity,
-              child: MyTaskWidget(
+              child: MyMilestones(
                 myTask: element,
                 goalsMap: widget.goalsMap,
                 updateState: widget.updateState,
@@ -569,7 +569,7 @@ class _MyGoalWidgetState extends State<MyGoalWidget> {
       padding: const EdgeInsets.all(10),
       margin: const EdgeInsets.symmetric(vertical: 2),
       decoration: BoxDecoration(
-        color: Colors.cyanAccent,
+        color: (widget.goalName![0] == '!')?Colors.grey:Colors.cyanAccent,
         borderRadius: BorderRadius.circular(10),
       ),
       child: Column(
@@ -605,13 +605,16 @@ class _MyGoalWidgetState extends State<MyGoalWidget> {
                           onPressed: (){myController.text='';Navigator.pop(context);},
                           icon: const Icon(Icons.close_sharp)
                       ),
-                          TextButton(
-                          onPressed: (){},
-                          onLongPress:(){
-                            Navigator.pop(context);
-                          },
-                          child: const Text('Achieved')
-                      )
+                          if(widget.goalName![0] != '!')TextButton(
+                            onPressed: (){},
+                            onLongPress:(){
+                              goalsMap['! ${widget.goalName}']=goalsMap[widget.goalName];
+                              goalsMap.remove(widget.goalName);
+                              widget.updateState();
+                              Navigator.pop(context);
+                            },
+                            child: const Text('Achieved')
+                          )
                         ],
                       )
                     ],
@@ -671,17 +674,17 @@ class _MyGoalWidgetState extends State<MyGoalWidget> {
   }
 }
 
-class MyTaskWidget extends StatefulWidget {
+class MyMilestones extends StatefulWidget {
   String? myTask;
   Map< String , List<String>? >? goalsMap;
   String? goalName;
   VoidCallback updateState;
-  MyTaskWidget({Key? key,this.myTask,this.goalsMap,this.goalName,required this.updateState}) : super(key: key);
+  MyMilestones({Key? key,this.myTask,this.goalsMap,this.goalName,required this.updateState}) : super(key: key);
 
   @override
-  State<MyTaskWidget> createState() => _MyTaskWidgetState();
+  State<MyMilestones> createState() => _MyMilestonesState();
 }
-class _MyTaskWidgetState extends State<MyTaskWidget> {
+class _MyMilestonesState extends State<MyMilestones> {
 
   @override
   Widget build(BuildContext context) {
@@ -710,10 +713,12 @@ class _MyTaskWidgetState extends State<MyTaskWidget> {
                         onPressed: (){Navigator.pop(context);},
                         icon: const Icon(Icons.close_sharp)
                     ),
-                    TextButton(
+                    if(widget.myTask![0] != '!')TextButton(
                         child: const Text('Achieved',),
                         onPressed: (){},
                         onLongPress:(){
+                          goalsMap[widget.goalName]!.add('! ${widget.myTask}');
+                          goalsMap[widget.goalName]!.remove(widget.myTask);
                           widget.updateState();
                           Navigator.pop(context);
                         }
@@ -725,7 +730,7 @@ class _MyTaskWidgetState extends State<MyTaskWidget> {
           },
         );
       },
-      style: ElevatedButton.styleFrom(primary: Colors.deepPurpleAccent),
+      style: ElevatedButton.styleFrom(primary: (widget.myTask![0]=='!')?Colors.black54:Colors.deepPurpleAccent),
       child: Container(
         alignment: Alignment.centerLeft,
         child: Text(
