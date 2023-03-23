@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:path/path.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:week_of_year/date_week_extensions.dart';
 
 Map< String, List<String>? > goalsMap = {};
 Map< String, String > questList = {};
@@ -204,6 +205,7 @@ class _MyDailyQuestState extends State<MyDailyQuest> {
             showDialog(
               context: context,
               builder: (context) {
+                DateTime timeInfo = DateTime.now();
                 return AlertDialog(
                   title: const Text(
                     'Manage your Quests',
@@ -225,6 +227,28 @@ class _MyDailyQuestState extends State<MyDailyQuest> {
                       onLongPress: (){
                         isLocked = true;
                         questList.forEach((key, value) {questList[key] ='0${value[1]}';});
+                        DateTime timeInfo = DateTime.now();
+                        if(timeInfo.weekday==7 && scoreList[58]!=9){
+                          int weekScore=0;
+                          for(int i = 0;i<7;i++){
+                            if(scoreList[52+i]!=9) {
+                                weekScore += scoreList[52 + i];
+                                scoreList[52 + i] = 9;
+                            }
+                          }
+                          if(timeInfo.isLeapYear){
+                            if(timeInfo.month!=1 || (timeInfo.day!= 1 && timeInfo.day!=2)){
+                              scoreList[timeInfo.weekOfYear]=(weekScore/7).round();
+                            }
+                          } else {
+                            if(timeInfo.month!=1 || timeInfo.day!= 1){
+                              print(timeInfo.weekOfYear);
+                              scoreList[timeInfo.weekOfYear-1]=(weekScore/7).round();
+                            }
+                          }
+                        }
+                        KermDatabase kdb = KermDatabase();
+                        kdb.updateScoreData();
                         updateQuests();
                         Navigator.pop(context);
                       },
@@ -233,19 +257,25 @@ class _MyDailyQuestState extends State<MyDailyQuest> {
                     if(isLocked)TextButton(
                         onPressed: (){},
                         onLongPress: (){
-                          isLocked=false;
-                          DateTime timeInfo = DateTime.now();
                           double totalMarks = 0;
                           double myMarks = 0;
                           questList.forEach((key, value) {
                             totalMarks = totalMarks + int.parse(value[1]);
                             myMarks = myMarks + int.parse(value[1])*int.parse(value[0]);
                           });
-                          scoreList[51+timeInfo.weekday]=(myMarks*8/totalMarks).round();
-                          updateQuests();
-                          Navigator.pop(context);
+                            if(scoreList[timeInfo.weekday+51]==9){
+                              isLocked=false;
+                              scoreList[51 + timeInfo.weekday] = totalMarks == 0
+                                  ? 0
+                                  : (myMarks * 8 / totalMarks).round();
+                              updateQuests();
+                              KermDatabase kdb = KermDatabase();
+                              kdb.updateScoreData();
+                            }
+                            Navigator.pop(context);
                         },
-                        child: const Text('End Quests')
+                        child: Text('End Quests',style: TextStyle(color: scoreList[timeInfo.weekday+51]==9?Colors.blue:Colors.red,)
+                        )
                     ),
                     IconButton(
                         onPressed: (){
@@ -297,7 +327,7 @@ class _MyQuestWidgetState extends State<MyQuestWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(padding: EdgeInsets.all(3),child:ElevatedButton(
+    return Padding(padding: const EdgeInsets.all(3),child:ElevatedButton(
       onPressed: (){},
       onLongPress:(){
         showDialog(
@@ -714,6 +744,7 @@ class MyScores extends StatefulWidget {
   State<MyScores> createState() => _MyScoresState();
 }
 class _MyScoresState extends State<MyScores> {
+  DateTime timeInfo = DateTime.now();
   setColor(int score){
     if(score<=1) {
       return Colors.red;
@@ -763,7 +794,7 @@ class _MyScoresState extends State<MyScores> {
           )
       );
     }
-    return Row(children: boxes);
+    return Row(mainAxisAlignment:MainAxisAlignment.spaceEvenly,children: boxes);
   }
 
   createBoxes(int size,int init){
@@ -818,6 +849,7 @@ class _MyScoresState extends State<MyScores> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
+          Center(child:Text(timeInfo.year.toString(),style: const TextStyle(fontSize: 50,color: Colors.white),)),
           Container(child:Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -849,7 +881,7 @@ class KermDatabase {
     Database _db = await openDB();
     await _db.insert('KermData', {'id': 0, 'ltg': 'Add a Goal', 'stg': 'Add a Milestone'}, conflictAlgorithm: ConflictAlgorithm.replace);
     await _db.insert('KermData', {'id': 1, 'ltg': 'Add a Quest', 'stg': '00'}, conflictAlgorithm: ConflictAlgorithm.replace);
-    await _db.insert('KermData', {'id': 2, 'ltg': '0-2-3-4-5-6-7-8-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9', 'stg': ''}, conflictAlgorithm: ConflictAlgorithm.replace);
+    await _db.insert('KermData', {'id': 2, 'ltg': '9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9', 'stg': ''}, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   Future<void> updateGoalData(Map<String,List<String>?> myGoalsMap)async{
@@ -970,7 +1002,7 @@ class KermDatabase {
       ltg.add(i.toString());
     }
 
-    myMap['ltg']=ltg.join('\n');
+    myMap['ltg']=ltg.join('-');
 
     print(myMap);
 
