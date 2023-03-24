@@ -31,9 +31,8 @@ void main() async{
   questList = await kdb.getQuestData();
   scoreList = await kdb.getScoreData();
   DateTime endTime = DateTime.parse(prefs.getString('endTime')!);
-  //print(timeInfo.toString());
-  if(timeInfo.compareTo(endTime)==1){
-
+ 
+  if(timeInfo.compareTo(endTime)==1 && prefs.getBool('isLocked')==true){
     double totalMarks = 0;
     double myMarks = 0;
     questList.forEach((key, value) {
