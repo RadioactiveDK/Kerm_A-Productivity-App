@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:path/path.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:week_of_year/date_week_extensions.dart';
+
 
 Map< String, List<String>? > goalsMap = {};
 Map< String, String > questList = {};
@@ -19,14 +21,37 @@ void main() async{
 
   if( !(await databaseFactory.databaseExists('KermDB.db')) ) {
     await kdb.initialiseDB();
+    prefs.setString('endTime', timeInfo.toString()); //2023-03-25 00:53:02.110855
     prefs.setInt('year', timeInfo.year);
     prefs.setInt('week', timeInfo.weekOfYear);
     prefs.setBool('isLocked', false);
   }
-
+  
   goalsMap = await kdb.getGoalData();
   questList = await kdb.getQuestData();
   scoreList = await kdb.getScoreData();
+  DateTime endTime = DateTime.parse(prefs.getString('endTime')!);
+  //print(timeInfo.toString());
+  if(timeInfo.compareTo(endTime)==1){
+
+    double totalMarks = 0;
+    double myMarks = 0;
+    questList.forEach((key, value) {
+      totalMarks = totalMarks + int.parse(value[1]);
+      myMarks = myMarks + int.parse(value[1])*int.parse(value[0]);
+    });
+
+    if(scoreList[timeInfo.weekday+51]==9){
+      prefs.setBool('isLocked', false);
+      scoreList[51 + timeInfo.weekday] = totalMarks == 0
+          ? 0
+          : (myMarks *8 / totalMarks).round();
+      //KermDatabase kdb = KermDatabase();
+      kdb.updateScoreData();
+    }
+  }
+
+
 
   if(timeInfo.year!=prefs.getInt('year')){
     var temp = '9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9-9'.split('-');
@@ -143,6 +168,36 @@ class MySettings extends StatefulWidget {
   State<MySettings> createState() => _MySettingsState();
 }
 class _MySettingsState extends State<MySettings> {
+  TimeOfDay _time = TimeOfDay.now();
+  late TimeOfDay picked;
+  DateTime time=DateTime.now();
+  @override
+  void initState() {
+    super.initState();
+    getTime();
+  }
+
+  Future<void> getTime() async {
+    final prefs = await SharedPreferences.getInstance();
+    final value =  prefs.getString('endTime')!;
+    setState(() {
+      time = DateTime.parse(value!);
+    });
+  }
+
+  Future<void> selectTime(BuildContext context) async {
+    picked = (await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(time),
+    ))!;
+    DateTime now =  DateTime.now();
+    _time=picked;
+    time= DateTime(now.year, now.month, now.day, _time.hour, _time.minute);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('endTime', time.toString());
+    setState(() {});
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -157,7 +212,37 @@ class _MySettingsState extends State<MySettings> {
           },
         ),
       ),
-      body: Container(),
+      body: Center(
+
+        // Center is a layout widget. It takes
+        // a single child and positions it
+        // in the middle of the parent.
+        child: Column(
+          //mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              height:80,width: double.infinity,
+              color: Colors.black,
+              child:Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  Container(
+
+                    child: const Text('Auto-end daily quests at',style: TextStyle(fontSize: 20,color: Colors.white),),
+                  ),
+                  Container(
+                    color: Colors.teal,
+                    child:TextButton(
+                      onPressed:(){selectTime(context);},
+                      child: Text(DateFormat.jm().format(time), style: TextStyle(fontSize: 20, color:Colors.white)),
+                    ),
+                  ),
+                ],  // Children
+              ),
+            ),
+          ],  // Children
+        ),
+      ),
     );
   }
 }
@@ -203,13 +288,13 @@ class _MyDailyQuestState extends State<MyDailyQuest> {
   createQuestWidgets(){
     var questWidgets = <Widget>[];
     questList.forEach((key, value) {
-    questWidgets.add(
-        MyQuestWidget(
-          isLocked: isLocked,
-          questName: key,
-          updateState: updateState(),
-        )
-    );
+      questWidgets.add(
+          MyQuestWidget(
+            isLocked: isLocked,
+            questName: key,
+            updateState: updateState(),
+          )
+      );
     });
     return questWidgets;
   }
@@ -237,7 +322,7 @@ class _MyDailyQuestState extends State<MyDailyQuest> {
                     style: TextStyle(color: Colors.black),
                   ),
                   content: !isLocked ?
-                      TextField(
+                  TextField(
                     controller: myController,
                     style: const TextStyle(
                         color: Colors.black,
@@ -247,7 +332,7 @@ class _MyDailyQuestState extends State<MyDailyQuest> {
                       labelText: 'Add a Quest',
                     ),
                   ):
-                      const Text('End Quests',style: TextStyle(color: Colors.black),),
+                  const Text('End Quests',style: TextStyle(color: Colors.black),),
                   actions: [
                     if(!isLocked)TextButton(
                       onPressed: (){},
@@ -268,15 +353,15 @@ class _MyDailyQuestState extends State<MyDailyQuest> {
                             totalMarks = totalMarks + int.parse(value[1]);
                             myMarks = myMarks + int.parse(value[1])*int.parse(value[0]);
                           });
-                            if(scoreList[timeInfo.weekday+51]==9){
-                              isLocked=false;
-                              scoreList[51 + timeInfo.weekday] = totalMarks == 0
-                                  ? 0
-                                  : (myMarks *8 / totalMarks).round();
-                              KermDatabase kdb = KermDatabase();
-                              kdb.updateScoreData();
-                              updateQuests();
-                            }
+                          if(scoreList[timeInfo.weekday+51]==9){
+                            isLocked=false;
+                            scoreList[51 + timeInfo.weekday] = totalMarks == 0
+                                ? 0
+                                : (myMarks *8 / totalMarks).round();
+                            KermDatabase kdb = KermDatabase();
+                            kdb.updateScoreData();
+                            updateQuests();
+                          }
                           Navigator.pop(context);
                         },
                         child: Text('End Quests',style: TextStyle(color: scoreList[timeInfo.weekday+51]==9?Colors.blue:Colors.red,)
@@ -342,34 +427,34 @@ class _MyQuestWidgetState extends State<MyQuestWidget> {
               title: const Text('Options',style: TextStyle(color: Colors.black),),
               actions: [
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children:[
-                    if(!widget.isLocked)TextButton(
-                      onPressed: (){},
-                      onLongPress:(){
-                        questList.remove(widget.questName);
-                        if(questList.isEmpty)questList['Add a Quest']='00';
-                        widget.updateState();
-                        Navigator.pop(context);
-                      },
-                      child: const Text('Delete Quest')
-                    ),
-                    if(widget.isLocked )TextButton(
-                        child: (questList[widget.questName]![0]=='0')?const Text('Mark as done'):const Text('Mark as undone'),
-                        onPressed: (){},
-                        onLongPress:(){
-                          (questList[widget.questName]![0]=='0')?
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children:[
+                      if(!widget.isLocked)TextButton(
+                          onPressed: (){},
+                          onLongPress:(){
+                            questList.remove(widget.questName);
+                            if(questList.isEmpty)questList['Add a Quest']='00';
+                            widget.updateState();
+                            Navigator.pop(context);
+                          },
+                          child: const Text('Delete Quest')
+                      ),
+                      if(widget.isLocked )TextButton(
+                          child: (questList[widget.questName]![0]=='0')?const Text('Mark as done'):const Text('Mark as undone'),
+                          onPressed: (){},
+                          onLongPress:(){
+                            (questList[widget.questName]![0]=='0')?
                             questList[widget.questName]='1${questList[widget.questName]![1]}':
-                          questList[widget.questName]='0${questList[widget.questName]![1]}';
-                          widget.updateState();
-                          Navigator.pop(context);
-                        }
-                    ),
-                    IconButton(
-                        onPressed: (){Navigator.pop(context);},
-                        icon: const Icon(Icons.close_sharp)
-                    ),
-                  ]
+                            questList[widget.questName]='0${questList[widget.questName]![1]}';
+                            widget.updateState();
+                            Navigator.pop(context);
+                          }
+                      ),
+                      IconButton(
+                          onPressed: (){Navigator.pop(context);},
+                          icon: const Icon(Icons.close_sharp)
+                      ),
+                    ]
                 )
               ],
             );
@@ -387,30 +472,30 @@ class _MyQuestWidgetState extends State<MyQuestWidget> {
         alignment: Alignment.centerLeft,
         margin: const EdgeInsets.all(5),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(widget.questName,textAlign: TextAlign.start,style: const TextStyle(color: Colors.black)),
-          DropdownButton<String>(
-            value: questList[widget.questName]![1],
-            icon: const Icon(Icons.arrow_drop_down),
-            elevation: 16,
-            style: const TextStyle(color: Colors.deepPurple),
-            underline: Container(
-              height: 2,
-              color: Colors.deepPurpleAccent,
-            ),
-            onChanged: widget.isLocked? null:(String? value) {
-              questList[widget.questName] = questList[widget.questName]![0] + value!;
-              widget.updateState();
-            },
-            items: ['0','1','2','3','4','5'].map<DropdownMenuItem<String>>((String value) {
-              return DropdownMenuItem<String>(
-                value: value,
-                child: Text(value),
-              );
-            }).toList(),
-          )
-          ]
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(widget.questName,textAlign: TextAlign.start,style: const TextStyle(color: Colors.black)),
+              DropdownButton<String>(
+                value: questList[widget.questName]![1],
+                icon: const Icon(Icons.arrow_drop_down),
+                elevation: 16,
+                style: const TextStyle(color: Colors.deepPurple),
+                underline: Container(
+                  height: 2,
+                  color: Colors.deepPurpleAccent,
+                ),
+                onChanged: widget.isLocked? null:(String? value) {
+                  questList[widget.questName] = questList[widget.questName]![0] + value!;
+                  widget.updateState();
+                },
+                items: ['0','1','2','3','4','5'].map<DropdownMenuItem<String>>((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value),
+                  );
+                }).toList(),
+              )
+            ]
         ),
       ),
     ));
@@ -699,31 +784,31 @@ class _MyMilestonesState extends State<MyMilestones> {
               title: const Text('Options',style: TextStyle(color: Colors.black),),
               actions: [
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    TextButton(
-                        onPressed: (){},
-                        onLongPress:(){
-                          widget.goalsMap![widget.goalName!]!.remove(widget.myTask);
-                          widget.updateState();
-                          Navigator.pop(context);
-                        },
-                        child: const Text('Delete Milestone')
-                    ),
-                    IconButton(
-                        onPressed: (){Navigator.pop(context);},
-                        icon: const Icon(Icons.close_sharp)
-                    ),
-                    if(widget.myTask![0] != '!')TextButton(
-                        child: const Text('Achieved',),
-                        onPressed: (){},
-                        onLongPress:(){
-                          goalsMap[widget.goalName]![goalsMap[widget.goalName]!.indexOf(widget.myTask!)]='! ${widget.myTask}';
-                          widget.updateState();
-                          Navigator.pop(context);
-                        }
-                    ),
-                  ]
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      TextButton(
+                          onPressed: (){},
+                          onLongPress:(){
+                            widget.goalsMap![widget.goalName!]!.remove(widget.myTask);
+                            widget.updateState();
+                            Navigator.pop(context);
+                          },
+                          child: const Text('Delete Milestone')
+                      ),
+                      IconButton(
+                          onPressed: (){Navigator.pop(context);},
+                          icon: const Icon(Icons.close_sharp)
+                      ),
+                      if(widget.myTask![0] != '!')TextButton(
+                          child: const Text('Achieved',),
+                          onPressed: (){},
+                          onLongPress:(){
+                            goalsMap[widget.goalName]![goalsMap[widget.goalName]!.indexOf(widget.myTask!)]='! ${widget.myTask}';
+                            widget.updateState();
+                            Navigator.pop(context);
+                          }
+                      ),
+                    ]
                 )
               ],
             );
@@ -791,14 +876,14 @@ class _MyScoresState extends State<MyScores> {
           Padding(
               padding: const EdgeInsets.all(4),
               child: Container(
-                height: 45,width: 45,
-                decoration: BoxDecoration(
-                    color: setColor(scoreList[52+i]),
-                    borderRadius: BorderRadius.circular(23)
-                ),
-                child: Center(
-                  child:Text(week[i],style: TextStyle(color: scoreList[52+i]==9?Colors.white:Colors.black,fontWeight: FontWeight.bold,fontSize: 20),),
-                )
+                  height: 45,width: 45,
+                  decoration: BoxDecoration(
+                      color: setColor(scoreList[52+i]),
+                      borderRadius: BorderRadius.circular(23)
+                  ),
+                  child: Center(
+                    child:Text(week[i],style: TextStyle(color: scoreList[52+i]==9?Colors.white:Colors.black,fontWeight: FontWeight.bold,fontSize: 20),),
+                  )
               )
           )
       );
@@ -810,28 +895,28 @@ class _MyScoresState extends State<MyScores> {
     var bubbles = <Widget>[];
     for(int i = 0 ; i<size ; i++){
       bubbles.add(
-        Padding(
-          padding: const EdgeInsets.all(4),
-          child: Container(
-            height: 45,width: 45,
-            child: Center(
-              child: TextButton(
-                onPressed: (){
+          Padding(
+              padding: const EdgeInsets.all(4),
+              child: Container(
+                height: 45,width: 45,
+                child: Center(
+                  child: TextButton(
+                    onPressed: (){
 
-                },
-                style: TextButton.styleFrom(backgroundColor: init+7*i==timeInfo.weekOfYear? Colors.blueAccent:setColor(scoreList[init-1+7*i]),),
-                child: Text(
-                  (init+7*i).toString(),
-                  style: TextStyle(
-                      color: scoreList[init-1+7*i]==9?Colors.white:Colors.black,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 20
+                    },
+                    style: TextButton.styleFrom(backgroundColor: init+7*i==timeInfo.weekOfYear? Colors.blueAccent:setColor(scoreList[init-1+7*i]),),
+                    child: Text(
+                      (init+7*i).toString(),
+                      style: TextStyle(
+                          color: scoreList[init-1+7*i]==9?Colors.white:Colors.black,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 20
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            ),
+              )
           )
-        )
       );
     }
     return bubbles;
@@ -840,9 +925,9 @@ class _MyScoresState extends State<MyScores> {
     var scoreWidgets = <Widget>[];
     for(int i = 1;i<=size;i++) {
       scoreWidgets.add(
-        Column(
-          children: createBoxes((i<=3)?8:7,i)
-        )
+          Column(
+              children: createBoxes((i<=3)?8:7,i)
+          )
       );
     }
     return scoreWidgets;
@@ -851,20 +936,20 @@ class _MyScoresState extends State<MyScores> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: double.infinity,
-      padding: const EdgeInsets.all(10),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          Center(child:Text(timeInfo.year.toString(),style: const TextStyle(fontSize: 50,color: Colors.white),)),
-          Container(child:Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children:createScoreWidgets(7)
-          )),
-          createWeekBoxes()
-        ]
-      )
+        height: double.infinity,
+        padding: const EdgeInsets.all(10),
+        child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              Center(child:Text(timeInfo.year.toString(),style: const TextStyle(fontSize: 50,color: Colors.white),)),
+              Container(child:Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children:createScoreWidgets(7)
+              )),
+              createWeekBoxes()
+            ]
+        )
     );
   }
 }
