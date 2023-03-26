@@ -26,12 +26,12 @@ void main() async{
     prefs.setInt('week', timeInfo.weekOfYear);
     prefs.setBool('isLocked', false);
   }
-  
+
   goalsMap = await kdb.getGoalData();
   questList = await kdb.getQuestData();
   scoreList = await kdb.getScoreData();
   DateTime endTime = DateTime.parse(prefs.getString('endTime')!);
- 
+
   if(timeInfo.compareTo(endTime)==1 && prefs.getBool('isLocked')==true){
     double totalMarks = 0;
     double myMarks = 0;
@@ -193,7 +193,13 @@ class _MySettingsState extends State<MySettings> {
     _time=picked;
     time= DateTime(now.year, now.month, now.day, _time.hour, _time.minute);
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('endTime', time.toString());
+    if(scoreList[timeInfo.weekOfYear-1]==9) {
+      prefs.setString('endTime', time.toString());
+    }
+    else{
+      time=time.add(const Duration(days: 1));
+      prefs.setString('endTime', time.toString());
+    }
     setState(() {});
   }
 
@@ -336,6 +342,15 @@ class _MyDailyQuestState extends State<MyDailyQuest> {
                     if(!isLocked)TextButton(
                       onPressed: (){},
                       onLongPress: (){
+                        DateTime endTime =DateTime.parse(prefs.getString('endTime'));
+                        DateTime newTime = DateTime(timeInfo.year, timeInfo.month, timeInfo.day, endTime.hour, endTime.minute);
+                        if(scoreList[timeInfo.weekOfYear-1]==9) {
+                          prefs.setString('endTime', newTime.toString());
+                        }
+                        else{
+                          newTime =newTime.add(const Duration(days: 1));
+                          prefs.setString('endTime', newTime.toString());
+                        }
                         isLocked = true;
                         questList.forEach((key, value) {questList[key] ='0${value[1]}';});
                         updateQuests();
