@@ -193,13 +193,14 @@ class _MySettingsState extends State<MySettings> {
     _time=picked;
     time= DateTime(now.year, now.month, now.day, _time.hour, _time.minute);
     final prefs = await SharedPreferences.getInstance();
-    if(scoreList[timeInfo.weekOfYear-1]==9) {
+    if(scoreList[51+timeInfo.weekday]==9) {
       prefs.setString('endTime', time.toString());
     }
     else{
       time=time.add(const Duration(days: 1));
       prefs.setString('endTime', time.toString());
     }
+    print(time);
     setState(() {});
   }
 
@@ -983,7 +984,7 @@ class KermDatabase {
   }
 
   Future<void> initialiseDB()async{
-    print('initialised');
+    // print('initialised');
     Database _db = await openDB();
     await _db.insert('KermData', {'id': 0, 'ltg': 'Add a Goal', 'stg': 'Add a Milestone'}, conflictAlgorithm: ConflictAlgorithm.replace);
     await _db.insert('KermData', {'id': 1, 'ltg': 'Add a Quest', 'stg': '00'}, conflictAlgorithm: ConflictAlgorithm.replace);
@@ -1006,7 +1007,7 @@ class KermDatabase {
     myMap['ltg']=ltg.join('\n');
     myMap['stg']=stg.join('\n');
 
-    print(myMap);
+    // print(myMap);
 
     await db.update(
       'KermData',
@@ -1020,10 +1021,10 @@ class KermDatabase {
     Map<String,List<String>?> goalMap={};
 
     final List<Map<String, dynamic>> dataList = await db.query('KermData');
-    print(dataList);
+    // print(dataList);
 
     Map<String, dynamic> dataMap = dataList[0];
-    print(dataMap);
+    // print(dataMap);
 
     List<String>? ltg;
     List<String>? stg;
@@ -1032,8 +1033,8 @@ class KermDatabase {
     stg = dataMap['stg'].split('\n');
 
 
-    print(ltg);
-    print(stg);
+    // print(ltg);
+    // print(stg);
 
     for (int i =0; i < ltg!.length ; i++) {
       if(stg![i]!='Egg'){
@@ -1043,7 +1044,7 @@ class KermDatabase {
       }
     }
 
-    print(goalMap);
+    // print(goalMap);
 
     return goalMap;
   }
@@ -1051,7 +1052,7 @@ class KermDatabase {
   Future<void> updateQuestData()async{
     Database db = await openDB();
     Map<String,dynamic> myMap = {'id':1};
-    print(questList);
+    // print(questList);
 
     List<String> ltg = [];
     List<String> stg = [];
@@ -1064,7 +1065,7 @@ class KermDatabase {
     myMap['stg']=stg.join('\n');
 
 
-    print(myMap);
+    // print(myMap);
 
     await db.update(
       'KermData',
@@ -1079,21 +1080,21 @@ class KermDatabase {
     final List<Map<String, dynamic>> dataList = await db.query('KermData');
     Map<String, dynamic> dataMap = dataList[1];
 
-    print(dataList);
-    print(dataMap);
+    //(dataList);
+    // print(dataMap);
 
     List<String> ltg = dataMap['ltg'].split('\n');
     List<String> stg = dataMap['stg'].split('\n');
 
-    print(ltg);
-    print(stg);
+    // print(ltg);
+    // print(stg);
 
     Map<String,String> mp={};
 
     for(int i=0;i<ltg.length;i++){
       mp[ltg[i]]=stg[i];
     }
-    print(mp);
+    // print(mp);
     return mp;
   }
 
@@ -1108,7 +1109,7 @@ class KermDatabase {
 
     myMap['ltg']=ltg.join('-');
 
-    print(myMap);
+    // print(myMap);
 
     await db.update(
       'KermData',
@@ -1123,18 +1124,18 @@ class KermDatabase {
     final List<Map<String, dynamic>> dataList = await db.query('KermData');
     Map<String, dynamic> dataMap = dataList[2];
 
-    print(dataList);
-    print(dataMap);
+    // print(dataList);
+    // print(dataMap);
 
     List<String> ltg = dataMap['ltg'].split('-');
-    print(ltg);
+    //(ltg);
 
     List<int> myList = [];
 
     for(int i=0;i<ltg.length;i++){
       myList.add( int.parse(ltg[i]) );
     }
-    print(myList);
+    // print(myList);
     return myList;
   }
 }
