@@ -345,7 +345,7 @@ class _MyDailyQuestState extends State<MyDailyQuest> {
                       onLongPress: (){
                         DateTime endTime =DateTime.parse(prefs.getString('endTime'));
                         DateTime newTime = DateTime(timeInfo.year, timeInfo.month, timeInfo.day, endTime.hour, endTime.minute);
-                        if(scoreList[timeInfo.weekOfYear-1]==9) {
+                        if(scoreList[timeInfo.weekday+51]==9) {
                           prefs.setString('endTime', newTime.toString());
                         }
                         else{
