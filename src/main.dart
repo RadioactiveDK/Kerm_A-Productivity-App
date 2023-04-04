@@ -21,7 +21,7 @@ void main() async{
 
   if( !(await databaseFactory.databaseExists('KermDB.db')) ) {
     await kdb.initialiseDB();
-    prefs.setString('endTime', timeInfo.toString()); //2023-03-25 00:53:02.110855
+    prefs.setString('endTime', '2023-03-25 23:55:00.000000'); //2023-03-25 00:53:02.110855
     prefs.setInt('year', timeInfo.year);
     prefs.setInt('week', timeInfo.weekOfYear);
     prefs.setBool('isLocked', false);
@@ -112,6 +112,14 @@ class MyHomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
+          flexibleSpace: Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: <Color>[Colors.red, Colors.amberAccent]),
+            ),
+          ),
           title: const Text(
             'Kerm',
             style: TextStyle(
@@ -180,7 +188,7 @@ class _MySettingsState extends State<MySettings> {
     final prefs = await SharedPreferences.getInstance();
     final value =  prefs.getString('endTime')!;
     setState(() {
-      time = DateTime.parse(value!);
+      time = DateTime.parse(value);
     });
   }
 
