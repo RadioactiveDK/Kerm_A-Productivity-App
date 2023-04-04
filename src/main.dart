@@ -112,14 +112,6 @@ class MyHomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
-          flexibleSpace: Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: <Color>[Colors.red, Colors.amberAccent]),
-            ),
-          ),
           title: const Text(
             'Kerm',
             style: TextStyle(
@@ -441,8 +433,7 @@ class _MyQuestWidgetState extends State<MyQuestWidget> {
   @override
   Widget build(BuildContext context) {
     return Padding(padding: const EdgeInsets.all(3),child:ElevatedButton(
-      onPressed: (){},
-      onLongPress:(){
+      onPressed: (){
         showDialog(
           context: context,
           builder: (context) {
@@ -696,41 +687,6 @@ class _MyGoalWidgetState extends State<MyGoalWidget> {
         children: [
           TextButton(
             style: TextButton.styleFrom(primary:Colors.black,textStyle: const TextStyle(fontSize: 20,fontWeight: FontWeight.bold)),
-            onLongPress: (){
-              showDialog(
-                context: context,
-                builder: (context) {
-                  return AlertDialog(
-                    title: const Text(
-                      'Options',
-                      style: TextStyle(color: Colors.black),
-                    ),
-                    actions: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children:[
-                          TextButton(
-                            onPressed:(){},
-                            onLongPress: (){
-                              widget.goalsMap!.remove(widget.goalName);
-                              myController.text='';
-                              if(widget.goalsMap!.isEmpty)goalsMap['Add a Goal']=['Add a Milestone'];
-                              widget.updateState();
-                              Navigator.pop(context);
-                            },
-                            child: const Text('Delete Goal'),
-                          ),
-                          IconButton(
-                              onPressed: (){myController.text='';Navigator.pop(context);},
-                              icon: const Icon(Icons.close_sharp)
-                          ),
-                        ],
-                      )
-                    ],
-                  );
-                },
-              );
-            },
             onPressed: (){
               showDialog(
                 context: context,
@@ -748,6 +704,17 @@ class _MyGoalWidgetState extends State<MyGoalWidget> {
                       ),
                     ),
                     actions: [
+                      TextButton(
+                        onPressed:(){},
+                        onLongPress: (){
+                          widget.goalsMap!.remove(widget.goalName);
+                          myController.text='';
+                          if(widget.goalsMap!.isEmpty)goalsMap['Add a Goal']=['Add a Milestone'];
+                          widget.updateState();
+                          Navigator.pop(context);
+                        },
+                        child: const Text('Delete Goal'),
+                      ),
                       IconButton(
                           onPressed: (){myController.text='';Navigator.pop(context);},
                           icon: const Icon(Icons.close_sharp)
@@ -798,8 +765,7 @@ class _MyMilestonesState extends State<MyMilestones> {
   @override
   Widget build(BuildContext context) {
     return ElevatedButton(
-      onPressed: (){},
-      onLongPress:(){
+      onPressed: (){
         showDialog(
           context: context,
           builder: (context) {
@@ -965,12 +931,13 @@ class _MyScoresState extends State<MyScores> {
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               Center(child:Text(timeInfo.year.toString(),style: const TextStyle(fontSize: 50,color: Colors.white),)),
+              createWeekBoxes(),
               Container(child:Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children:createScoreWidgets(7)
               )),
-              createWeekBoxes()
+
             ]
         )
     );
