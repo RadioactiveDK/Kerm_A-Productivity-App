@@ -15,7 +15,7 @@ void main() async{
   WidgetsFlutterBinding.ensureInitialized();
 
   KermDatabase kdb = KermDatabase();
-  // await kdb.initialiseDB();
+  await kdb.initialiseDB();
 
   final prefs = await SharedPreferences.getInstance();
 
@@ -99,7 +99,7 @@ class MyApp extends StatelessWidget {
           )
       ),
       home: const DefaultTabController(
-        length: 3,
+        length: 2,
         child: MyHomePage(),
       ),
     );
@@ -142,12 +142,12 @@ class MyHomePage extends StatelessWidget {
                   style: TextStyle(color: Colors.black),
                 ),
               ),
-              Tab(
-                child: Text(
-                  'Scores',
-                  style: TextStyle(color: Colors.black),
-                ),
-              ),
+              // Tab(
+              //   child: Text(
+              //     'Scores',
+              //     style: TextStyle(color: Colors.black),
+              //   ),
+              // ),
             ],
           ),
         ),
@@ -155,7 +155,7 @@ class MyHomePage extends StatelessWidget {
           children: [
             MyDailyQuest(),
             MyGoals(),
-            MyScores(),
+            // MyScores(),
           ],
         ));
   }
@@ -200,7 +200,7 @@ class _MySettingsState extends State<MySettings> {
       time=time.add(const Duration(days: 1));
       prefs.setString('endTime', time.toString());
     }
-    print(time);
+    // print(time);
     setState(() {});
   }
 
@@ -376,10 +376,22 @@ class _MyDailyQuestState extends State<MyDailyQuest> {
                             KermDatabase kdb = KermDatabase();
                             kdb.updateScoreData();
                             updateQuests();
+                            Navigator.pop(context);
+
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => ElevatedButton(
+                                style: ElevatedButton.styleFrom(primary:Colors.black38),
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                },
+                                child: MyScores(),
+                              ),
+                              ),
+                            );
                           }
-                          Navigator.pop(context);
                         },
-                        child: Text('End Quests',style: TextStyle(color: scoreList[timeInfo.weekday+51]==9?Colors.blue:Colors.red,)
+                        child: Text('End Quests',style: TextStyle(color: (scoreList[timeInfo.weekday+51]==9)?Colors.blue:Colors.red,)
                         )
                     ),
                     IconButton(
@@ -863,7 +875,7 @@ class _MyScoresState extends State<MyScores> {
     for(int i =0 ;i<7;i++) {
       boxes.add(
           Padding(
-              padding: const EdgeInsets.all(4),
+              padding: const EdgeInsets.all(1),
               child: Container(
                   height: 45,width: 45,
                   decoration: BoxDecoration(
@@ -885,14 +897,12 @@ class _MyScoresState extends State<MyScores> {
     for(int i = 0 ; i<size ; i++){
       bubbles.add(
           Padding(
-              padding: const EdgeInsets.all(4),
+              padding: const EdgeInsets.all(2),
               child: Container(
                 height: 45,width: 45,
                 child: Center(
                   child: TextButton(
-                    onPressed: (){
-
-                    },
+                    onPressed: (){},
                     style: TextButton.styleFrom(backgroundColor: init+7*i==timeInfo.weekOfYear? Colors.blueAccent:setColor(scoreList[init-1+7*i]),),
                     child: Text(
                       (init+7*i).toString(),
@@ -925,19 +935,18 @@ class _MyScoresState extends State<MyScores> {
   @override
   Widget build(BuildContext context) {
     return Container(
-        height: double.infinity,
-        padding: const EdgeInsets.all(10),
         child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Center(child:Text(timeInfo.year.toString(),style: const TextStyle(fontSize: 50,color: Colors.white),)),
+              Center(child:Text(timeInfo.year.toString()+" Scores",style: const TextStyle(fontSize: 50,color: Colors.white),)),
+              SizedBox(height: 50,),
               createWeekBoxes(),
-              Container(child:Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+              SizedBox(height: 50,),
+              Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children:createScoreWidgets(7)
-              )),
-
+              ),
             ]
         )
     );
