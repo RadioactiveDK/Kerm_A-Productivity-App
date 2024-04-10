@@ -67,15 +67,10 @@ class _MySettingsState extends State<MySettings> {
               child:Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  Container(
-                    child: const Text('Auto-end daily quests at'),
-                  ),
-                  Container(
-                    color: Colors.teal,
-                    child:TextButton(
-                      onPressed:(){selectTime(context);},
-                      child: Text(DateFormat.jm().format(time), style: const TextStyle(fontSize: 20, color:Colors.white)),
-                    ),
+                  const Text('Auto-end daily quests at', style: TextStyle(fontSize: 20)),
+                  ElevatedButton(
+                    onPressed:(){selectTime(context);},
+                    child: Text(DateFormat.jm().format(time), style: const TextStyle(fontSize: 20)),
                   ),
                 ],  // Children
               ),
