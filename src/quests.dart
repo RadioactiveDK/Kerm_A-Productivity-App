@@ -228,11 +228,10 @@ class _MyQuestWidgetState extends State<MyQuestWidget> {
         );
       },
       style: ElevatedButton.styleFrom(
-        backgroundColor: questList[widget.questName]![0] == '0' ?Colors.greenAccent:Colors.grey,
-        shadowColor: Colors.white,
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20.0)
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        backgroundColor:  Colors.black54,
+        shadowColor: questList[widget.questName]![0] == '0' ? Colors.cyanAccent: Colors.deepPurpleAccent,
+        elevation: 7,
       ),
       child: Container(
         alignment: Alignment.centerLeft,
@@ -240,7 +239,7 @@ class _MyQuestWidgetState extends State<MyQuestWidget> {
         child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(widget.questName,style: const TextStyle(color: Colors.black),),
+              Text(widget.questName,style: questList[widget.questName]![0] == '0' ? TextStyle() : TextStyle(decoration: TextDecoration.lineThrough)),
               DropdownButton<String>(
                 value: questList[widget.questName]![1],
                 icon: const Icon(Icons.arrow_drop_down),

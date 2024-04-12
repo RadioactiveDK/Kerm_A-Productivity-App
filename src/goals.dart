@@ -154,15 +154,19 @@ class _MyGoalWidgetState extends State<MyGoalWidget> {
       width: double.infinity,
       padding: const EdgeInsets.all(10),
       margin: const EdgeInsets.symmetric(vertical: 2),
-      decoration: BoxDecoration(
-        color: goalColor(widget.goalName!),
-        borderRadius: BorderRadius.circular(10),
-      ),
+      // decoration: BoxDecoration(
+      //   color: goalColor(widget.goalName!),
+      //   borderRadius: BorderRadius.circular(10),
+      // ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          TextButton(
-            style: TextButton.styleFrom(textStyle: const TextStyle(fontSize: 20,fontWeight: FontWeight.bold)),
+          ElevatedButton(
+            // style: TextButton.styleFrom(
+            //   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            //   backgroundColor:  Colors.black54,
+            //   textStyle: const TextStyle(fontSize: 20,fontWeight: FontWeight.bold)
+            // ),
             onPressed: (){
               showDialog(
                 context: context,
@@ -206,10 +210,7 @@ class _MyGoalWidgetState extends State<MyGoalWidget> {
                 },
               );
             },
-            child: Text(
-              widget.goalName!,
-              style: const TextStyle(color:Colors.black, fontWeight: FontWeight.bold, fontSize: 20),
-            ),
+            child: Text(widget.goalName!),
           ),
           Padding(
               padding: const EdgeInsets.only(bottom: 1),
@@ -275,7 +276,12 @@ class _MyMilestonesState extends State<MyMilestones> {
           },
         );
       },
-      style: ElevatedButton.styleFrom(backgroundColor: (widget.myTask![0]=='!')?Colors.black54:Colors.orange),
+      style: ElevatedButton.styleFrom(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        backgroundColor: (widget.myTask![0]=='!')?Colors.black54:Colors.orange,
+        shadowColor: Colors.cyanAccent,
+        elevation: 7,
+      ),
       child: Container(
         alignment: Alignment.centerLeft,
         child: Text(

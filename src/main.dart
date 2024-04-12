@@ -189,7 +189,8 @@ void main() async{
   WidgetsFlutterBinding.ensureInitialized();
 
   KermDatabase kdb = KermDatabase();
-  await kdb.initialiseDB();
+
+  // await kdb.initialiseDB();
 
   final prefs = await SharedPreferences.getInstance();
 

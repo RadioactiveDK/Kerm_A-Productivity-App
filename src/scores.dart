@@ -105,7 +105,7 @@ class _MyScoresState extends State<MyScores> {
   @override
   Widget build(BuildContext context) {
     return Column(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           Center(child:Text("${timeInfo.year} Scores",style: const TextStyle(fontSize: 50,color: Colors.white),)),
 
