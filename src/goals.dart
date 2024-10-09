@@ -279,14 +279,14 @@ class _MyMilestonesState extends State<MyMilestones> {
       style: ElevatedButton.styleFrom(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         backgroundColor: (widget.myTask![0]=='!')?Colors.black54:Colors.orange,
-        shadowColor: Colors.cyanAccent,
-        elevation: 7,
+        shadowColor: Colors.yellowAccent,
+        elevation: 5,
       ),
       child: Container(
         alignment: Alignment.centerLeft,
         child: Text(
           widget.myTask!,
-          style: const TextStyle(color: Colors.white),
+          style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
         ),
       ),
     );

@@ -274,17 +274,17 @@ class MyHomePage extends StatelessWidget {
     return Scaffold(
         appBar: AppBar(
           title: const Text('Kerm'),
-          actions: <Widget>[
-            IconButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const MySettings()),
-                );
-              },
-              icon: const Icon(Icons.settings),
-            )
-          ],
+          // actions: <Widget>[
+          //   IconButton(
+          //     onPressed: () {
+          //       Navigator.push(
+          //         context,
+          //         MaterialPageRoute(builder: (context) => const MySettings()),
+          //       );
+          //     },
+          //     icon: const Icon(Icons.settings),
+          //   )
+          // ],
           bottom: const TabBar(
             tabs: [
               Tab(

@@ -83,23 +83,32 @@ class _MyDailyQuestState extends State<MyDailyQuest> {
                     if(!isLocked)TextButton(
                       onPressed: (){},
                       onLongPress: (){
-                        DateTime endTime =DateTime.parse(prefs.getString('endTime'));
-                        DateTime newTime = DateTime(timeInfo.year, timeInfo.month, timeInfo.day, endTime.hour, endTime.minute);
                         if(scoreList[timeInfo.weekday+51]==9) {
-                          prefs.setString('endTime', newTime.toString());
+                          DateTime endTime = DateTime.parse(
+                              prefs.getString('endTime'));
+                          DateTime newTime = DateTime(
+                              timeInfo.year, timeInfo.month, timeInfo.day,
+                              endTime.hour, endTime.minute);
+                          if (scoreList[timeInfo.weekday + 51] == 9) {
+                            prefs.setString('endTime', newTime.toString());
+                          }
+                          else {
+                            newTime = newTime.add(const Duration(days: 1));
+                            prefs.setString('endTime', newTime.toString());
+                          }
+                          isLocked = true;
+                          questList.forEach((key, value) {
+                            questList[key] = '0${value[1]}';
+                          });
+                          updateQuests();
+                          Navigator.pop(context);
                         }
-                        else{
-                          newTime =newTime.add(const Duration(days: 1));
-                          prefs.setString('endTime', newTime.toString());
-                        }
-                        isLocked = true;
-                        questList.forEach((key, value) {questList[key] ='0${value[1]}';});
-                        updateQuests();
-                        Navigator.pop(context);
                       },
-                      child: const Text('Start Quests'),
+                      child: (scoreList[timeInfo.weekday+51]==9)?
+                        const Text('Start Quests'):
+                        const Text('Start Quests',style: TextStyle(color:Colors.red,)),
                     ),
-                    if(isLocked)TextButton(
+                    if(isLocked) TextButton(
                         onPressed: (){},
                         onLongPress: (){
                           double totalMarks = 0;
@@ -108,7 +117,7 @@ class _MyDailyQuestState extends State<MyDailyQuest> {
                             totalMarks = totalMarks + int.parse(value[1]);
                             myMarks = myMarks + int.parse(value[1])*int.parse(value[0]);
                           });
-                          if(scoreList[timeInfo.weekday+51]==9){
+                          if(true || scoreList[timeInfo.weekday+51]==9){
                             isLocked=false;
                             scoreList[51 + timeInfo.weekday] = totalMarks == 0
                                 ? 0
@@ -131,8 +140,7 @@ class _MyDailyQuestState extends State<MyDailyQuest> {
                             );
                           }
                         },
-                        child: (scoreList[timeInfo.weekday+51]==9)?const Text('End Quests'):const Text('End Quests',style: TextStyle(color:Colors.red,)
-                        )
+                        child: (true)?const Text('End Quests'):const Text('End Quests',style: TextStyle(color:Colors.red,))
                     ),
                     IconButton(
                         onPressed: (){
@@ -229,9 +237,7 @@ class _MyQuestWidgetState extends State<MyQuestWidget> {
       },
       style: ElevatedButton.styleFrom(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        backgroundColor:  Colors.black54,
-        shadowColor: questList[widget.questName]![0] == '0' ? Colors.cyanAccent: Colors.deepPurpleAccent,
-        elevation: 7,
+        backgroundColor:  (questList[widget.questName]![0]=='0')?Colors.white:Colors.black,
       ),
       child: Container(
         alignment: Alignment.centerLeft,
@@ -239,12 +245,13 @@ class _MyQuestWidgetState extends State<MyQuestWidget> {
         child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(widget.questName,style: questList[widget.questName]![0] == '0' ? TextStyle() : TextStyle(decoration: TextDecoration.lineThrough)),
+              Text(widget.questName,style: questList[widget.questName]![0] == '0' ? TextStyle(color: Colors.black) : TextStyle(color:Colors.white, decoration: TextDecoration.lineThrough)),
               DropdownButton<String>(
                 value: questList[widget.questName]![1],
-                icon: const Icon(Icons.arrow_drop_down),
+                icon: const Icon(Icons.arrow_drop_down,color: Colors.cyan,),
                 elevation: 16,
                 underline: Container(
+                  color: Colors.cyan,
                   height: 2,
                 ),
                 onChanged: widget.isLocked? null:(String? value) {
@@ -254,7 +261,7 @@ class _MyQuestWidgetState extends State<MyQuestWidget> {
                 items: ['0','1','2','3','4','5'].map<DropdownMenuItem<String>>((String value) {
                   return DropdownMenuItem<String>(
                     value: value,
-                    child: Text(value),
+                    child: Text(value,style: TextStyle(color: Colors.cyan)),
                   );
                 }).toList(),
               )
