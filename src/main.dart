@@ -187,7 +187,6 @@ class KermDatabase {
 
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
-
   KermDatabase kdb = KermDatabase();
 
   // await kdb.initialiseDB();
@@ -266,25 +265,115 @@ class MyApp extends StatelessWidget {
     );
   }
 }
-class MyHomePage extends StatelessWidget {
+
+class MyHomePage extends StatefulWidget {
   const MyHomePage({Key? key}) : super(key: key);
+
+  @override
+  State<MyHomePage> createState() => _MyHomePageState();
+}
+
+class _MyHomePageState extends State<MyHomePage> {
+  final GlobalKey<MyDailyQuestState> childKey = GlobalKey<MyDailyQuestState>();
+
+
+  bool isLocked = false;
+  var prefs;
+
+  @override
+  void initState(){
+    super.initState();
+    loadBool();
+  }
+
+  Future<void> loadBool() async {
+    prefs = await SharedPreferences.getInstance();
+    setState(() {
+      isLocked = prefs.getBool('isLocked')!;
+    });
+  }
+
+  void updateQuests()async{
+    KermDatabase kdb = KermDatabase();
+    await kdb.updateQuestData();
+    await kdb.updateScoreData();
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setBool('isLocked', isLocked);
+    childKey.currentState?.setState((){});
+    setState(() {});
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
           title: const Text('Kerm'),
-          // actions: <Widget>[
-          //   IconButton(
-          //     onPressed: () {
-          //       Navigator.push(
-          //         context,
-          //         MaterialPageRoute(builder: (context) => const MySettings()),
-          //       );
-          //     },
-          //     icon: const Icon(Icons.settings),
-          //   )
-          // ],
+          actions: <Widget>[
+            if(!isLocked)TextButton(
+              onPressed: (){},
+              onLongPress: (){
+                if(scoreList[timeInfo.weekday+51]==9) {
+                  DateTime endTime = DateTime.parse(
+                      prefs.getString('endTime'));
+                  DateTime newTime = DateTime(
+                      timeInfo.year, timeInfo.month, timeInfo.day,
+                      endTime.hour, endTime.minute);
+                  if (scoreList[timeInfo.weekday + 51] == 9) {
+                    prefs.setString('endTime', newTime.toString());
+                  }
+                  else {
+                    newTime = newTime.add(const Duration(days: 1));
+                    prefs.setString('endTime', newTime.toString());
+                  }
+                  isLocked = true;
+                  questList.forEach((key, value) {
+                    questList[key] = '0${value[1]}';
+                  });
+                  updateQuests();
+                  childKey.currentState?.refreshState(true);
+                  // Navigator.pop(context);
+                }
+              },
+              child: (scoreList[timeInfo.weekday+51]==9)?
+                const Text('Start Quests'):
+                const Text('Start Quests',style: TextStyle(color:Colors.red,)),
+            )
+            else TextButton(
+                onPressed: (){},
+                onLongPress: (){
+                  double totalMarks = 0;
+                  double myMarks = 0;
+                  questList.forEach((key, value) {
+                    totalMarks = totalMarks + int.parse(value[1]);
+                    myMarks = myMarks + int.parse(value[1])*int.parse(value[0]);
+                  });
+                  if(true || scoreList[timeInfo.weekday+51]==9){
+                    isLocked=false;
+                    scoreList[51 + timeInfo.weekday] = totalMarks == 0
+                        ? 0
+                        : (myMarks *8 / totalMarks).round();
+                    KermDatabase kdb = KermDatabase();
+                    kdb.updateScoreData();
+                    updateQuests();
+                    childKey.currentState?.refreshState(false);
+                    // Navigator.pop(context);
+
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => ElevatedButton(
+                        style: ElevatedButton.styleFrom(backgroundColor:Colors.black38),
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                        child: const MyScores(),
+                      ),
+                      ),
+                    );
+                  }
+                },
+                child: const Text('End Quests')
+            ),
+          ],
           bottom: const TabBar(
             tabs: [
               Tab(
@@ -299,11 +388,11 @@ class MyHomePage extends StatelessWidget {
             ],
           ),
         ),
-        body: const TabBarView(
+        body: TabBarView(
           children: [
-            MyDailyQuest(),
-            MyGoals(),
-            MyScores(),
+            MyDailyQuest(key: childKey),
+            const MyGoals(),
+            const MyScores(),
           ],
         )
     );

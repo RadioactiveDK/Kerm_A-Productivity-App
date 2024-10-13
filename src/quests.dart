@@ -9,9 +9,9 @@ class MyDailyQuest extends StatefulWidget {
   const MyDailyQuest({Key? key}) : super(key: key);
 
   @override
-  State<MyDailyQuest> createState() => _MyDailyQuestState();
+  State<MyDailyQuest> createState() => MyDailyQuestState();
 }
-class _MyDailyQuestState extends State<MyDailyQuest> {
+class MyDailyQuestState extends State<MyDailyQuest> {
   bool isLocked = false;
   var prefs;
 
@@ -39,15 +39,20 @@ class _MyDailyQuestState extends State<MyDailyQuest> {
   updateState(){
     return ()=>updateQuests();
   }
+
+  refreshState(bool isLock){
+    isLocked=isLock;
+    setState(() {});
+  }
   createQuestWidgets(){
     var questWidgets = <Widget>[];
     questList.forEach((key, value) {
       questWidgets.add(
-          MyQuestWidget(
-            isLocked: isLocked,
-            questName: key,
-            updateState: updateState(),
-          )
+        MyQuestWidget(
+          isLocked: isLocked,
+          questName: key,
+          updateState: updateState(),
+        )
       );
     });
     return questWidgets;

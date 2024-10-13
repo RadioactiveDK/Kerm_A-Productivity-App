@@ -278,8 +278,8 @@ class _MyMilestonesState extends State<MyMilestones> {
       },
       style: ElevatedButton.styleFrom(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        backgroundColor: (widget.myTask![0]=='!')?Colors.black54:Colors.orange,
-        shadowColor: Colors.yellowAccent,
+        backgroundColor: (widget.myTask![0]=='!')?Colors.white24:Colors.deepPurpleAccent,
+        shadowColor: Colors.cyanAccent,
         elevation: 5,
       ),
       child: Container(
