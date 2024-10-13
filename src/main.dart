@@ -312,6 +312,7 @@ class _MyHomePageState extends State<MyHomePage> {
             if(!isLocked)TextButton(
               onPressed: (){},
               onLongPress: (){
+                // if(true||scoreList[timeInfo.weekday+51]==9) {
                 if(scoreList[timeInfo.weekday+51]==9) {
                   DateTime endTime = DateTime.parse(
                       prefs.getString('endTime'));

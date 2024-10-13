@@ -1,4 +1,5 @@
 // Daily Quest Tab
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:kerm/scores.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -68,7 +69,7 @@ class MyDailyQuestState extends State<MyDailyQuest> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: (isLocked)?Container():FloatingActionButton(
           child: const Icon(Icons.add,size: 25,),
           onPressed: (){
             showDialog(
@@ -85,68 +86,68 @@ class MyDailyQuestState extends State<MyDailyQuest> {
                   ):
                   const Text(''),
                   actions: [
-                    if(!isLocked)TextButton(
-                      onPressed: (){},
-                      onLongPress: (){
-                        if(scoreList[timeInfo.weekday+51]==9) {
-                          DateTime endTime = DateTime.parse(
-                              prefs.getString('endTime'));
-                          DateTime newTime = DateTime(
-                              timeInfo.year, timeInfo.month, timeInfo.day,
-                              endTime.hour, endTime.minute);
-                          if (scoreList[timeInfo.weekday + 51] == 9) {
-                            prefs.setString('endTime', newTime.toString());
-                          }
-                          else {
-                            newTime = newTime.add(const Duration(days: 1));
-                            prefs.setString('endTime', newTime.toString());
-                          }
-                          isLocked = true;
-                          questList.forEach((key, value) {
-                            questList[key] = '0${value[1]}';
-                          });
-                          updateQuests();
-                          Navigator.pop(context);
-                        }
-                      },
-                      child: (scoreList[timeInfo.weekday+51]==9)?
-                        const Text('Start Quests'):
-                        const Text('Start Quests',style: TextStyle(color:Colors.red,)),
-                    ),
-                    if(isLocked) TextButton(
-                        onPressed: (){},
-                        onLongPress: (){
-                          double totalMarks = 0;
-                          double myMarks = 0;
-                          questList.forEach((key, value) {
-                            totalMarks = totalMarks + int.parse(value[1]);
-                            myMarks = myMarks + int.parse(value[1])*int.parse(value[0]);
-                          });
-                          if(true || scoreList[timeInfo.weekday+51]==9){
-                            isLocked=false;
-                            scoreList[51 + timeInfo.weekday] = totalMarks == 0
-                                ? 0
-                                : (myMarks *8 / totalMarks).round();
-                            KermDatabase kdb = KermDatabase();
-                            kdb.updateScoreData();
-                            updateQuests();
-                            Navigator.pop(context);
-
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => ElevatedButton(
-                                style: ElevatedButton.styleFrom(backgroundColor:Colors.black38),
-                                onPressed: () {
-                                  Navigator.pop(context);
-                                },
-                                child: const MyScores(),
-                              ),
-                              ),
-                            );
-                          }
-                        },
-                        child: (true)?const Text('End Quests'):const Text('End Quests',style: TextStyle(color:Colors.red,))
-                    ),
+                    // if(!isLocked)TextButton(
+                    //   onPressed: (){},
+                    //   onLongPress: (){
+                    //     if(scoreList[timeInfo.weekday+51]==9) {
+                    //       DateTime endTime = DateTime.parse(
+                    //           prefs.getString('endTime'));
+                    //       DateTime newTime = DateTime(
+                    //           timeInfo.year, timeInfo.month, timeInfo.day,
+                    //           endTime.hour, endTime.minute);
+                    //       if (scoreList[timeInfo.weekday + 51] == 9) {
+                    //         prefs.setString('endTime', newTime.toString());
+                    //       }
+                    //       else {
+                    //         newTime = newTime.add(const Duration(days: 1));
+                    //         prefs.setString('endTime', newTime.toString());
+                    //       }
+                    //       isLocked = true;
+                    //       questList.forEach((key, value) {
+                    //         questList[key] = '0${value[1]}';
+                    //       });
+                    //       updateQuests();
+                    //       Navigator.pop(context);
+                    //     }
+                    //   },
+                    //   child: (scoreList[timeInfo.weekday+51]==9)?
+                    //     const Text('Start Quests'):
+                    //     const Text('Start Quests',style: TextStyle(color:Colors.red,)),
+                    // ),
+                    // if(isLocked) TextButton(
+                    //     onPressed: (){},
+                    //     onLongPress: (){
+                    //       double totalMarks = 0;
+                    //       double myMarks = 0;
+                    //       questList.forEach((key, value) {
+                    //         totalMarks = totalMarks + int.parse(value[1]);
+                    //         myMarks = myMarks + int.parse(value[1])*int.parse(value[0]);
+                    //       });
+                    //       if(true || scoreList[timeInfo.weekday+51]==9){
+                    //         isLocked=false;
+                    //         scoreList[51 + timeInfo.weekday] = totalMarks == 0
+                    //             ? 0
+                    //             : (myMarks *8 / totalMarks).round();
+                    //         KermDatabase kdb = KermDatabase();
+                    //         kdb.updateScoreData();
+                    //         updateQuests();
+                    //         Navigator.pop(context);
+                    //
+                    //         Navigator.push(
+                    //           context,
+                    //           MaterialPageRoute(builder: (context) => ElevatedButton(
+                    //             style: ElevatedButton.styleFrom(backgroundColor:Colors.black38),
+                    //             onPressed: () {
+                    //               Navigator.pop(context);
+                    //             },
+                    //             child: const MyScores(),
+                    //           ),
+                    //           ),
+                    //         );
+                    //       }
+                    //     },
+                    //     child: (true)?const Text('End Quests'):const Text('End Quests',style: TextStyle(color:Colors.red,))
+                    // ),
                     IconButton(
                         onPressed: (){
                           myController.text='';
@@ -199,11 +200,12 @@ class _MyQuestWidgetState extends State<MyQuestWidget> {
   Widget build(BuildContext context) {
     return Padding(padding: const EdgeInsets.all(3),child:ElevatedButton(
       onPressed: (){
-        showDialog(
+        if(!widget.isLocked) {
+          showDialog(
           context: context,
           builder: (context) {
             return AlertDialog(
-              title: const Text('Options'),
+              title: const Text('Are you sure you want to delete this quest?'),
               actions: [
                 Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -218,17 +220,17 @@ class _MyQuestWidgetState extends State<MyQuestWidget> {
                           },
                           child: const Text('Delete Quest')
                       ),
-                      if(widget.isLocked )TextButton(
-                          child: (questList[widget.questName]![0]=='0')?const Text('Mark as done'):const Text('Mark as undone'),
-                          onPressed: (){},
-                          onLongPress:(){
-                            (questList[widget.questName]![0]=='0')?
-                            questList[widget.questName]='1${questList[widget.questName]![1]}':
-                            questList[widget.questName]='0${questList[widget.questName]![1]}';
-                            widget.updateState();
-                            Navigator.pop(context);
-                          }
-                      ),
+                      // if(widget.isLocked )TextButton(
+                      //     child: (questList[widget.questName]![0]=='0')?const Text('Mark as done'):const Text('Mark as undone'),
+                      //     onPressed: (){},
+                      //     onLongPress:(){
+                      //       (questList[widget.questName]![0]=='0')?
+                      //       questList[widget.questName]='1${questList[widget.questName]![1]}':
+                      //       questList[widget.questName]='0${questList[widget.questName]![1]}';
+                      //       widget.updateState();
+                      //       Navigator.pop(context);
+                      //     }
+                      // ),
                       IconButton(
                           onPressed: (){Navigator.pop(context);},
                           icon: const Icon(Icons.close_sharp)
@@ -239,6 +241,23 @@ class _MyQuestWidgetState extends State<MyQuestWidget> {
             );
           },
         );
+        }
+      },
+      onLongPress:()async{
+        if(widget.isLocked) {
+          if(questList[widget.questName]![0] == '0') {
+            final AudioPlayer _audioPlayer = AudioPlayer();
+            for(int i=0;i<int.parse(questList[widget.questName]![1]!);i++) {
+              await _audioPlayer.play(AssetSource('coins.mp3'));
+              await _audioPlayer.onPlayerComplete.first;
+            }
+          }
+          (questList[widget.questName]![0] == '0') ?
+          questList[widget.questName] = '1${questList[widget.questName]![1]}' :
+          questList[widget.questName] = '0${questList[widget.questName]![1]}';
+          widget.updateState();
+          // Navigator.pop(context);
+        }
       },
       style: ElevatedButton.styleFrom(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -266,7 +285,7 @@ class _MyQuestWidgetState extends State<MyQuestWidget> {
                 items: ['0','1','2','3','4','5'].map<DropdownMenuItem<String>>((String value) {
                   return DropdownMenuItem<String>(
                     value: value,
-                    child: Text(value,style: TextStyle(color: Colors.cyan)),
+                    child: Text(value,style: const TextStyle(color: Colors.cyan)),
                   );
                 }).toList(),
               )
