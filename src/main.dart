@@ -195,7 +195,7 @@ void main() async{
 
   if( !(await databaseFactory.databaseExists('KermDB.db')) ) {
     await kdb.initialiseDB();
-    prefs.setString('endTime', '2023-03-25 23:55:00.000000'); //2023-03-25 00:53:02.110855
+    prefs.setString('questTime', '2023-03-25 23:55:00.000000'); //2023-03-25 00:53:02.110855
     prefs.setInt('year', timeInfo.year);
     prefs.setInt('week', timeInfo.weekOfYear);
     prefs.setBool('isLocked', false);
@@ -204,25 +204,24 @@ void main() async{
   goalsMap = await kdb.getGoalData();
   questList = await kdb.getQuestData();
   scoreList = await kdb.getScoreData();
-  DateTime endTime = DateTime.parse(prefs.getString('endTime')!);
-
-  if(timeInfo.compareTo(endTime)==1 && prefs.getBool('isLocked')==true){
-    double totalMarks = 0;
-    double myMarks = 0;
-    questList.forEach((key, value) {
-      totalMarks = totalMarks + int.parse(value[1]);
-      myMarks = myMarks + int.parse(value[1])*int.parse(value[0]);
-    });
-
-    if(scoreList[timeInfo.weekday+51]==9){
-      prefs.setBool('isLocked', false);
-      scoreList[51 + timeInfo.weekday] = totalMarks == 0
-          ? 0
-          : (myMarks *8 / totalMarks).round();
-      //KermDatabase kdb = KermDatabase();
-      kdb.updateScoreData();
-    }
-  }
+  // DateTime endTime = DateTime.parse(prefs.getString('endTime')!);
+  // if(timeInfo.compareTo(endTime)==1 && prefs.getBool('isLocked')==true){
+  //   double totalMarks = 0;
+  //   double myMarks = 0;
+  //   questList.forEach((key, value) {
+  //     totalMarks = totalMarks + int.parse(value[1]);
+  //     myMarks = myMarks + int.parse(value[1])*int.parse(value[0]);
+  //   });
+  //
+  //   if(scoreList[timeInfo.weekday+51]==9){
+  //     prefs.setBool('isLocked', false);
+  //     scoreList[51 + timeInfo.weekday] = totalMarks == 0
+  //         ? 0
+  //         : (myMarks *8 / totalMarks).round();
+  //     //KermDatabase kdb = KermDatabase();
+  //     kdb.updateScoreData();
+  //   }
+  // }
 
 
 
@@ -312,20 +311,21 @@ class _MyHomePageState extends State<MyHomePage> {
             if(!isLocked)TextButton(
               onPressed: (){},
               onLongPress: (){
-                // if(true||scoreList[timeInfo.weekday+51]==9) {
-                if(scoreList[timeInfo.weekday+51]==9) {
-                  DateTime endTime = DateTime.parse(
-                      prefs.getString('endTime'));
-                  DateTime newTime = DateTime(
-                      timeInfo.year, timeInfo.month, timeInfo.day,
-                      endTime.hour, endTime.minute);
-                  if (scoreList[timeInfo.weekday + 51] == 9) {
-                    prefs.setString('endTime', newTime.toString());
-                  }
-                  else {
-                    newTime = newTime.add(const Duration(days: 1));
-                    prefs.setString('endTime', newTime.toString());
-                  }
+                if(true||scoreList[timeInfo.weekday+51]==9) {
+                // if(scoreList[timeInfo.weekday+51]==9) {
+                //   DateTime endTime = DateTime.parse(
+                //       prefs.getString('endTime'));
+                //   DateTime newTime = DateTime(
+                //       timeInfo.year, timeInfo.month, timeInfo.day,
+                //       endTime.hour, endTime.minute);
+                //   if (scoreList[timeInfo.weekday + 51] == 9) {
+                //     prefs.setString('endTime', newTime.toString());
+                //   }
+                //   else {
+                //     newTime = newTime.add(const Duration(days: 1));
+                //     prefs.setString('endTime', newTime.toString());
+                //   }
+                  prefs.setString('questTime', timeInfo.toString());
                   isLocked = true;
                   questList.forEach((key, value) {
                     questList[key] = '0${value[1]}';
@@ -336,8 +336,8 @@ class _MyHomePageState extends State<MyHomePage> {
                 }
               },
               child: (scoreList[timeInfo.weekday+51]==9)?
-                const Text('Start Quests'):
-                const Text('Start Quests',style: TextStyle(color:Colors.red,)),
+                Text('Start Quests: ${timeInfo.toString().split(' ')[0]}'):
+                const Text('Quests Completed',style: TextStyle(color:Colors.lightGreenAccent,)),
             )
             else TextButton(
                 onPressed: (){},
@@ -350,9 +350,11 @@ class _MyHomePageState extends State<MyHomePage> {
                   });
                   if(true || scoreList[timeInfo.weekday+51]==9){
                     isLocked=false;
-                    scoreList[51 + timeInfo.weekday] = totalMarks == 0
+                    DateTime questTime = DateTime.parse(
+                            prefs.getString('questTime'));
+                    scoreList[51 + questTime.weekday] = (totalMarks == 0)
                         ? 0
-                        : (myMarks *8 / totalMarks).round();
+                        : (myMarks * 8 / totalMarks).round();
                     KermDatabase kdb = KermDatabase();
                     kdb.updateScoreData();
                     updateQuests();
@@ -372,7 +374,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     );
                   }
                 },
-                child: const Text('End Quests')
+                child: Text('End Quests: ${DateTime.parse(prefs.getString('questTime')).toString().split(' ')[0]}')
             ),
           ],
           bottom: const TabBar(
